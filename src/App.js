@@ -1,24 +1,23 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { Container } from 'react-bootstrap';
+// Kendi oluşturduğumuz bileşenleri import ediyoruz
+import FileSelectionAndInfoSection from './components/FileSelectionAndInfoSection';
+import KBSErrorsSection from './components/KBSErrorsSection';
+import TableSection from './components/TableSection';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+  return ( 
+    // Bootstrap'ın Container bileşeni ile sayfa içeriğini ortalıyor ve boşluk bırakıyoruz
+    <Container className="my-5">
+      {/* 1. Bölüm */}
+      <FileSelectionAndInfoSection />
+
+      {/* 2. Bölüm */}
+      <KBSErrorsSection />
+
+      {/* 3. Bölüm */}
+      <TableSection />
+    </Container>
   );
 }
 
