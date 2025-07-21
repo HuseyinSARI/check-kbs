@@ -8,7 +8,7 @@ import TableSection from './components/TableSection';
 function App() {
   return ( 
     // Bootstrap'ın Container bileşeni ile sayfa içeriğini ortalıyor ve boşluk bırakıyoruz
-    <Container className="my-5">
+    <Container fluid  className="my-5 ">
       {/* 1. Bölüm */}
       <FileSelectionAndInfoSection />
 
