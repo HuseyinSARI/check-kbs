@@ -1,22 +1,19 @@
+// src/components/FileSelectionAndInfoSection.jsx
 import React from 'react';
-import { Card, Row, Col } from 'react-bootstrap';
+import { Card, Row, Col, Alert } from 'react-bootstrap'; 
 import FileInputArea from './FileInputArea';
-import ErrorDetailsArea from './ErrorDetailsArea';
-import GeneraInfoArea from './GeneraInfoArea';
+import ErrorDetailsArea from './ErrorDetailsArea'; 
+import GeneraInfoArea from './GeneraInfoArea'; 
 
-import { useData } from '../context/DataContext'; // DataContext'i kullanmak için
-import { handleFileProcessing } from '../utils/processFileData'; // Yeni işleme fonksiyonu
-
+import { useData } from '../context/DataContext'; 
+// handleFileProcessing import'ı artık gerekli değil, kaldırıldı.
 
 function FileSelectionAndInfoSection() {
 
-  const dataContext = useData(); // DataContext'i bir obje olarak al
+  // Context'ten handleFileUpload, isProcessing ve uploadError'ı al
+  const { handleFileUpload, isProcessing, uploadError } = useData(); // handleFileUpload'ı Context'ten alıyor
 
-  // FileInputArea'dan dosya seçildiğinde çağrılacak handler
-  const onFileSelected = (file, fileType) => {
-    // console.log(`Dosya seçildi: ${file.name}, Tipi: ${fileType}`);
-    handleFileProcessing(file, fileType, dataContext); // İşleme fonksiyonunu çağır
-  };
+  // onFileSelected fonksiyonu artık kullanılmadığı için kaldırıldı.
 
   return (
     <Card className="mb-4 shadow-lg">
@@ -25,15 +22,15 @@ function FileSelectionAndInfoSection() {
       </Card.Header>
       <Card.Body>
         <Row className="g-4">
-          <Col md={12}> {/* Daha geniş bir alan verelim */}
-            {/* onFileSelect prop'unu FileInputArea'ya iletiyoruz */}
-            <FileInputArea onFileSelect={onFileSelected} />
+          <Col md={12}> 
+            {/* onFileSelect prop'una doğrudan handleFileUpload'ı iletiyoruz */}
+            <FileInputArea onFileSelect={handleFileUpload} isLoading={isProcessing} /> 
           </Col>
-          <Col md={6}> {/* Tüm satırı kaplasın */}
-            <ErrorDetailsArea />
+          <Col md={6}> 
+            <ErrorDetailsArea /> 
           </Col>
-          <Col md={6}> {/* Tüm satırı kaplasın */}
-            <GeneraInfoArea />
+          <Col md={6}> 
+            <GeneraInfoArea /> 
           </Col>
         </Row>
       </Card.Body>

@@ -1,36 +1,10 @@
-import React, { createContext, useState, useContext } from 'react';
+// src/context/DataContext.js
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+// 
+import { useFileProcessing } from '../services/fileProcessingService';
 
-const DataContext = createContext();
 
-export const DataProvider = ({ children }) => {
-  const [globalParsedData, setGlobalParsedData] = useState(null);
-  const [globalErrors, setGlobalErrors] = useState([]);
-  const [globalTableData, setGlobalTableData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // YENİ STATE'LERİ EKLE
-  const [mainInhouseData, setMainInhouseData] = useState([]); // XML'den çekilen ham verinin belirli kısımları
-  const [mainOperaData, setMainOperaData] = useState([]);   // İşlenmiş ve birleştirilmiş ana veri
-
-  return (
-    <DataContext.Provider value={{
-      globalParsedData,
-      setGlobalParsedData,
-      globalErrors,
-      setGlobalErrors,
-      globalTableData,
-      setGlobalTableData,
-      isLoading,
-      setIsLoading,
-      mainInhouseData,     // Yeni state'i context'e ekle
-      setMainInhouseData,  // Yeni setter fonksiyonunu context'e ekle
-      mainOperaData,       // Yeni state'i context'e ekle
-      setMainOperaData     // Yeni setter fonksiyonunu context'e ekle
-    }}>
-      {children}
-    </DataContext.Provider>
-  );
-};
+const DataContext = createContext(null);
 
 export const useData = () => {
   const context = useContext(DataContext);
@@ -38,4 +12,135 @@ export const useData = () => {
     throw new Error('useData must be used within a DataProvider');
   }
   return context;
+};
+
+export const DataProvider = ({ children }) => {
+  // 1. Raw Data State'leri (Her dosya tipi için ayrı)
+  const [rawInhouseData, setRawInhouseData] = useState(null);
+  const [rawKBSData, setRawKBSData] = useState(null);
+  const [rawPolisRaporuData, setRawPolisRaporuData] = useState(null);
+  const [rawRoutingData, setRawRoutingData] = useState(null);
+  const [rawCashringData, setRawCashringData] = useState(null);
+
+  // 2. Processed Data State'leri (Her dosya tipi için ayrı)
+  const [processedInhouseData, setProcessedInhouseData] = useState([]);
+  const [processedKBSData, setProcessedKBSData] = useState([]);
+  const [processedPolisRaporuData, setProcessedPolisRaporuData] = useState([]); 
+  const [processedRoutingData, setProcessedRoutingData] = useState({});
+  const [processedCashringData, setProcessedCashringData] = useState({});
+
+  // 3. Genel Kontrol ve Hata State'leri
+  const [mainControlData, setMainControlData] = useState([]); // Ana tablo için
+  const [kbsErrorsData, setKbsErrorsData] = useState([]); // KBS'e özel hata listesi
+  const [generalOperaErrorsData, setGeneralOperaErrorsData] = useState([]); // Operaya özel hataların
+  
+  const [generalInfoData, setGeneralInfoData] = useState({
+    messages: [{ 
+      id: Date.now(), // Benzersiz ID
+      type: 'info', 
+      text: 'Program başlatıldı ve kullanıma hazır.', 
+      fileType: 'general' 
+    }]
+  }); 
+  // UI Durum State'leri
+  const [uploadError, setUploadError] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+
+  // Helper function to add a message to generalInfoData state
+  const addGeneralInfo = useCallback((type, text, fileType = 'general') => {
+    setGeneralInfoData(prevInfo => {
+      const newMessages = prevInfo.messages ? [...prevInfo.messages] : [];
+      newMessages.push({ id: Date.now() + Math.random(), type, text, fileType });
+      return { ...prevInfo, messages: newMessages };
+    });
+  }, []);
+
+  // Helper function to add an error to generalOperaErrorsData state
+  const addGeneralOperaError = useCallback((type, message, details = {}) => {
+    setGeneralOperaErrorsData(prevErrors => {
+      const newErrors = [...prevErrors];
+      newErrors.push({ id: Date.now() + Math.random(), type, message, timestamp: new Date().toISOString(), ...details });
+      return newErrors;
+    });
+  }, []);
+
+// useFileProcessing hook'unu çağırarak handleFileUpload fonksiyonunu alıyoruz
+  // Tüm gerekli setter'ları ve helper'ları bu hook'a iletiyoruz
+  const handleFileUpload = useFileProcessing({
+    setRawInhouseData,
+    setProcessedInhouseData,
+
+    setRawKBSData,
+    setProcessedKBSData,
+
+    setRawPolisRaporuData,
+    setProcessedPolisRaporuData,
+    
+    setRawRoutingData,
+    setProcessedRoutingData,
+
+    setRawCashringData,
+    setProcessedCashringData,
+
+    setKbsErrorsData,
+    setGeneralInfoData,
+    setGeneralOperaErrorsData,
+
+    setUploadError,
+    setIsProcessing,
+
+    addGeneralInfo,
+    addGeneralOperaError,
+  });
+
+  // Context üzerinden sağlanacak değerler
+  const contextValue = useMemo(() => ({
+    rawInhouseData, setRawInhouseData,
+    processedInhouseData, setProcessedInhouseData,
+    
+    rawKBSData, setRawKBSData,
+    processedKBSData, setProcessedKBSData,
+
+    rawPolisRaporuData, setRawPolisRaporuData,
+    processedPolisRaporuData, setProcessedPolisRaporuData,
+
+    rawRoutingData, setRawRoutingData,
+    processedRoutingData, setProcessedRoutingData,
+
+    rawCashringData, setRawCashringData,
+    processedCashringData, setProcessedCashringData,
+
+    mainControlData, setMainControlData,
+    kbsErrorsData, setKbsErrorsData,
+    generalOperaErrorsData, setGeneralOperaErrorsData,
+    generalInfoData, setGeneralInfoData,
+
+    uploadError, setUploadError,
+    isProcessing, setIsProcessing,
+
+    handleFileUpload, // Artık dışarıdan geliyor
+    addGeneralInfo, // Dışarıdan hala erişilebilir olmalı
+    addGeneralOperaError // Dışarıdan hala erişilebilir olmalı
+  }), [
+    rawInhouseData, processedInhouseData,
+    rawKBSData, processedKBSData,
+    rawPolisRaporuData, processedPolisRaporuData,
+    rawRoutingData, processedRoutingData,
+    rawCashringData, processedCashringData,
+
+    mainControlData, kbsErrorsData,
+    generalOperaErrorsData, generalInfoData,
+
+    uploadError, isProcessing,
+    handleFileUpload, // useFileProcessing'den geldiği için stable
+    addGeneralInfo, 
+    addGeneralOperaError // useCallback ile sarılı olduğu için stable
+  ]);
+
+  return (
+    <DataContext.Provider value={contextValue}>
+      {children}
+    </DataContext.Provider>
+  );
 };

@@ -1,7 +1,12 @@
 import React from 'react';
 import { Card, Spinner, Row, Col, ListGroup, Badge, Alert } from 'react-bootstrap'; // Yeni bileşenleri import ettik
+import { useData } from '../context/DataContext'; // DataContext'i import ettik
+
 
 function GeneralInfoArea() {
+
+  const { generalInfoData } = useData();
+
   // Şimdilik kontrol durumları ve genel mesajlar statik olarak tanımlanıyor
   // Daha sonra bunlar DataContext'ten gelen verilerle dinamik hale getirilecek
   const checks = [
@@ -13,17 +18,20 @@ function GeneralInfoArea() {
     { id: 'routingComment', name: 'Routing-Comment ', status: 'pending' },
   ];
 
-  const generalMessages = [
-    { id: 1, type: 'info', text: 'Program başlatıldı ve kullanıma hazır.' },
-    { id: 2, type: 'success', text: 'Inhouse dosyası başarıyla yüklendi: "Inhouse_202507.xml"' },
-    { id: 3, type: 'warning', text: 'KBS dosyası yüklenmedi, bazı kontroller yapılamayacak.' },
-    { id: 4, type: 'error', text: 'Genel bir hata oluştu: Veritabanı bağlantısı kesildi.' },
-    { id: 5, type: 'success', text: 'Polis Raporu dosyası başarıyla yüklendi: "PolisRaporu_Temmuz.xlsx"' },
-    { id: 6, type: 'info', text: 'KBS Kontrolü başlatıldı.' },
-    { id: 7, type: 'error', text: 'KBS Kontrolü tamamlandı: Oda No 405 için Rate Kodu bulunamadı.' },
-    { id: 8, type: 'success', text: 'Kişi Sayısı Kontrolü başarıyla tamamlandı.' },
-    { id: 9, type: 'info', text: 'Tüm kontroller tamamlandı.' },
-  ];
+
+  // Sadece generalInfoData.messages'ı gösteriyoruz
+  const allMessages = React.useMemo(() => {
+    // generalInfoData içindeki 'messages' dizisi (addGeneralMessage tarafından eklenenler)
+    const messages = generalInfoData.messages && Array.isArray(generalInfoData.messages)
+      ? [...generalInfoData.messages]
+      : [];
+
+    // Mesajları zamana göre sırala (en yeni en altta)
+    messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    return messages;
+  }, [generalInfoData.messages]);
+
 
   // Yardımcı fonksiyon: Kontrol durumuna göre arka plan ve metin rengi ayarlar
   const getCheckStyle = (status) => {
@@ -41,7 +49,7 @@ function GeneralInfoArea() {
   return (
     <Card className="shadow-sm"
       style={{
-        minHeight: '475px',        
+        minHeight: '475px',
       }}>
       <Card.Body>
         <Card.Title className="text-success mb-3">
@@ -69,38 +77,43 @@ function GeneralInfoArea() {
           </Row>
         </div>
 
-        {/* Genel Bilgi ve Hata Mesajları Bölümü */}
-        <h5 className="mb-3 text-secondary">Genel Mesajlar</h5>
+        {/* Genel Bilgi ve Mesajlar Bölümü */}
+        <h5 className="mb-3 text-secondary">Mesajlar</h5>
         <div
           style={{
-            maxHeight: '190px', // Sabit yükseklik, ihtiyaca göre ayarlanabilir
-            overflowY: 'auto',   // Dikey kaydırma çubuğu
+            maxHeight: '190px', // Orijinal yüksekliğe geri döndürüldü
+            overflowY: 'auto',
             paddingRight: '10px'
           }}
           className="general-messages-container"
         >
-          <ListGroup variant="flush"> {/* Kenarlıkları olmayan liste */}
-            {generalMessages.map(msg => (
-              <ListGroup.Item
-                key={msg.id}
-                className={`d-flex align-items-center ${msg.type === 'error' ? 'text-danger' :
-                    msg.type === 'warning' ? 'text-warning' :
-                      'text-muted' // Default info veya success için
-                  }`}
-              >
-                {msg.type === 'success' && <i className="bi bi-check-circle-fill me-2 text-success"></i>}
-                {msg.type === 'info' && <i className="bi bi-info-circle-fill me-2 text-primary"></i>}
-                {msg.type === 'warning' && <i className="bi bi-exclamation-triangle-fill me-2 text-warning"></i>}
-                {msg.type === 'error' && <i className="bi bi-x-circle-fill me-2 text-danger"></i>}
-                {msg.text}
-              </ListGroup.Item>
-            ))}
+          <ListGroup variant="flush">
+            {allMessages.length > 0 ? (
+              allMessages.map(msg => (
+                <ListGroup.Item
+                  key={msg.id}
+                  className={`d-flex align-items-center 
+                    ${msg.type === 'error' ? 'text-danger' :
+                      msg.type === 'warning' ? 'text-warning' :
+                        msg.type === 'success' ? 'text-success' :
+                          'text-muted'
+                    }`}
+                >
+                  {msg.type === 'success' && <i className="bi bi-check-circle-fill me-2"></i>}
+                  {msg.type === 'info' && <i className="bi bi-info-circle-fill me-2 text-primary"></i>}
+                  {msg.type === 'warning' && <i className="bi bi-exclamation-triangle-fill me-2"></i>}
+                  {msg.type === 'error' && <i className="bi bi-x-circle-fill me-2"></i>}
+                  {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                  {msg.text}
+                </ListGroup.Item>
+              ))
+            ) : (
+              <Alert variant="info" className="mt-3">
+                <i className="bi bi-info-circle-fill me-2"></i> Henüz genel bir mesaj bulunmamaktadır.
+              </Alert>
+            )}
           </ListGroup>
-          {generalMessages.length === 0 && (
-            <Alert variant="info" className="mt-3">
-              <i className="bi bi-info-circle-fill me-2"></i> Henüz genel bir mesaj bulunmamaktadır.
-            </Alert>
-          )}
+
         </div>
       </Card.Body>
     </Card>
