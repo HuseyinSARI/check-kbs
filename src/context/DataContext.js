@@ -25,23 +25,41 @@ export const DataProvider = ({ children }) => {
   // 2. Processed Data State'leri (Her dosya tipi için ayrı)
   const [processedInhouseData, setProcessedInhouseData] = useState([]);
   const [processedKBSData, setProcessedKBSData] = useState([]);
-  const [processedPolisRaporuData, setProcessedPolisRaporuData] = useState([]); 
+  const [processedPolisRaporuData, setProcessedPolisRaporuData] = useState([]);
   const [processedRoutingData, setProcessedRoutingData] = useState({});
   const [processedCashringData, setProcessedCashringData] = useState({});
 
   // 3. Genel Kontrol ve Hata State'leri
-  const [mainControlData, setMainControlData] = useState([]); // Ana tablo için
+  const [mainTableData, setMainTableData] = useState([]); // Ana tablo için
   const [kbsErrorsData, setKbsErrorsData] = useState([]); // KBS'e özel hata listesi
   const [generalOperaErrorsData, setGeneralOperaErrorsData] = useState([]); // Operaya özel hataların
-  
+
+  const [checks, setChecks] = useState([
+    { id: 'kbs_police_report', name: 'KBS/Opera', status: 'pending' },
+    { id: 'guestCount', name: 'Kişi Sayısı ', status: 'pending' }, // Başlangıçta pending olabilir
+    { id: 'tcPassport', name: 'TC/Pasaport ', status: 'pending' },
+    { id: 'birth_date_check', name: 'Doğum Tarihi ', status: 'pending' },
+    { id: 'clCa', name: 'CL/CA ', status: 'pending' },
+    { id: 'routingComment', name: 'Routing-Comment ', status: 'pending' },
+  ]);
+
+  // YENİ: Tek bir kontrolün durumunu güncellemek için fonksiyon
+  const updateCheckStatus = (checkId, newStatus) => {
+    setChecks(prevChecks =>
+      prevChecks.map(check =>
+        check.id === checkId ? { ...check, status: newStatus } : check
+      )
+    );
+  };
+
   const [generalInfoData, setGeneralInfoData] = useState({
-    messages: [{ 
+    messages: [{
       id: Date.now(), // Benzersiz ID
-      type: 'info', 
-      text: 'Program başlatıldı ve kullanıma hazır.', 
-      fileType: 'general' 
+      type: 'info',
+      text: 'Program başlatıldı ve kullanıma hazır.',
+      fileType: 'general'
     }]
-  }); 
+  });
   // UI Durum State'leri
   const [uploadError, setUploadError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -65,7 +83,7 @@ export const DataProvider = ({ children }) => {
     });
   }, []);
 
-// useFileProcessing hook'unu çağırarak handleFileUpload fonksiyonunu alıyoruz
+  // useFileProcessing hook'unu çağırarak handleFileUpload fonksiyonunu alıyoruz
   // Tüm gerekli setter'ları ve helper'ları bu hook'a iletiyoruz
   const handleFileUpload = useFileProcessing({
     setRawInhouseData,
@@ -76,7 +94,7 @@ export const DataProvider = ({ children }) => {
 
     setRawPolisRaporuData,
     setProcessedPolisRaporuData,
-    
+
     setRawRoutingData,
     setProcessedRoutingData,
 
@@ -98,7 +116,7 @@ export const DataProvider = ({ children }) => {
   const contextValue = useMemo(() => ({
     rawInhouseData, setRawInhouseData,
     processedInhouseData, setProcessedInhouseData,
-    
+
     rawKBSData, setRawKBSData,
     processedKBSData, setProcessedKBSData,
 
@@ -111,13 +129,17 @@ export const DataProvider = ({ children }) => {
     rawCashringData, setRawCashringData,
     processedCashringData, setProcessedCashringData,
 
-    mainControlData, setMainControlData,
+    mainTableData, setMainTableData,
     kbsErrorsData, setKbsErrorsData,
     generalOperaErrorsData, setGeneralOperaErrorsData,
     generalInfoData, setGeneralInfoData,
 
     uploadError, setUploadError,
     isProcessing, setIsProcessing,
+
+    checks,
+    updateCheckStatus,
+
 
     handleFileUpload, // Artık dışarıdan geliyor
     addGeneralInfo, // Dışarıdan hala erişilebilir olmalı
@@ -129,12 +151,16 @@ export const DataProvider = ({ children }) => {
     rawRoutingData, processedRoutingData,
     rawCashringData, processedCashringData,
 
-    mainControlData, kbsErrorsData,
+    mainTableData, kbsErrorsData,
     generalOperaErrorsData, generalInfoData,
+
+    checks,
+    updateCheckStatus,
+
 
     uploadError, isProcessing,
     handleFileUpload, // useFileProcessing'den geldiği için stable
-    addGeneralInfo, 
+    addGeneralInfo,
     addGeneralOperaError // useCallback ile sarılı olduğu için stable
   ]);
 

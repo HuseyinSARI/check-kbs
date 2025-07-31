@@ -23,6 +23,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
     rawKBSData,
     processedKBSData,
     kbsErrorsData,
+    generalOperaErrorsData,
 
     addGeneralInfo,
     setProcessedInhouseData
@@ -59,17 +60,20 @@ function FileInputArea({ onFileSelect, isLoading }) {
     // console.log("Inhouse verisi değiştirildi:", updatedData);
 
     console.log("raw inhouse :", rawInhouseData);
-    console.log("işlenmiş inhouse :", processedInhouseData);
-    console.log("rawPolisRaporuData :", rawPolisRaporuData);
-    console.log("processedPolisRaporuData :", processedPolisRaporuData);
-    console.log("rawRoutingData :", rawRoutingData);
-    console.log("processedRoutingData :", processedRoutingData);
-    console.log("rawCashringData :", rawCashringData);
-    console.log("processedCashringData :", processedCashringData);
     console.log("rawKBSData :", rawKBSData);
-    console.log("processedKBSData :", processedKBSData);
-    console.log("kbsErrorsData :", kbsErrorsData);
+    console.log("rawPolisRaporuData :", rawPolisRaporuData);
+    console.log("rawRoutingData :", rawRoutingData);
+    console.log("rawCashringData :", rawCashringData);
 
+    console.log("processedInhouseData :", processedInhouseData);
+    console.log("processedKBSData :", processedKBSData);
+    console.log("processedPolisRaporuData :", processedPolisRaporuData);
+    console.log("processedRoutingData :", processedRoutingData);
+    console.log("processedCashringData :", processedCashringData);
+    
+    console.log("kbsErrorsData :", kbsErrorsData);
+    console.log("generalOperaErrorsData :", generalOperaErrorsData);
+    
   };
 
   return (

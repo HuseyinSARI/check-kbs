@@ -4,11 +4,13 @@ import { Container } from 'react-bootstrap';
 import FileSelectionAndInfoSection from './components/FileSelectionAndInfoSection';
 import KBSErrorsSection from './components/KBSErrorsSection';
 import TableSection from './components/TableSection';
+import { useMainControls } from './controls/mainControls'; // Yeni hook'u içe aktarıyoruz
 
 import { useData } from './context/DataContext'; // useData hook'unu import et
 
 
 function App() {
+  useMainControls(); 
 
   // Sadece context'ten ihtiyacımız olan değerleri çekiyoruz
   // const {

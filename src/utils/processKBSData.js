@@ -124,8 +124,9 @@ export const transformKBSData = (rawData) => {
             const tcNoRaw = getValueOrEmptyString(row['T.C. No']);
             const belgeNoRaw = getValueOrEmptyString(row['Belge No']);
 
-            const unifiedBelgeNo = tcNoRaw !== '' ? tcNoRaw.toString() : belgeNoRaw.toString();
-
+            // unifiedBelgeNo string'e çevrildikten sonra tüm harfleri küçük harfe dönüştürülür.
+            const unifiedBelgeNo = fixTurkishChars((tcNoRaw !== '' ? tcNoRaw.toString() : belgeNoRaw.toString()).toLowerCase());
+            
             // Ad ve Soyad önce fixTurkishChars ile İngilizceye çevrilir, sonra formatlanır.
             const adRaw = getValueOrEmptyString(row['Adý']);
             const soyadRaw = getValueOrEmptyString(row['Soyadý']);

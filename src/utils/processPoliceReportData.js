@@ -97,13 +97,17 @@ export const transformPoliceReportData = (rawData) => {
             const formattedFirstName = formatNameSurname(rawFirstName);
             const formattedLastName = formatNameSurname(rawLastName);
 
+            const rawBelgeNo = getValueOrEmptyString(room.KIMLIKSERINO || room.BelgeNo); // Esneklik için farklı alan adlarını kontrol et
+            const formattedBelgeNo = String(rawBelgeNo).toLowerCase();
+
 
             // Bu alanları gerçek Polis Raporu XML yapınızdaki etiket isimlerine göre ayarlamalısınız!
             return {
                 roomNo: getValueOrEmptyString(room.VERILENODANO), 
                 firstName: formattedFirstName,
                 lastName: formattedLastName,
-                belgeNo: getValueOrEmptyString(room.KIMLIKSERINO),
+                belgeNo: formattedBelgeNo,
+                birthDate: getValueOrEmptyString(room.DOGUMTARIHI)
             };
         });
 

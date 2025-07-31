@@ -5,19 +5,14 @@ import { useData } from '../context/DataContext'; // DataContext'i import ettik
 
 function GeneralInfoArea() {
 
-  const { generalInfoData } = useData();
+  const {
+    generalInfoData,
+    checks
+  } = useData();
 
   // Şimdilik kontrol durumları ve genel mesajlar statik olarak tanımlanıyor
   // Daha sonra bunlar DataContext'ten gelen verilerle dinamik hale getirilecek
-  const checks = [
-    { id: 'kbs', name: 'KBS Kontrolü', status: 'pending' }, // 'pending', 'completed', 'error'
-    { id: 'guestCount', name: 'Kişi Sayısı ', status: 'completed' },
-    { id: 'tcPassport', name: 'TC/Pasaport ', status: 'error' },
-    { id: 'birthDate', name: 'Doğum Tarihi ', status: 'pending' },
-    { id: 'clCa', name: 'CL/CA ', status: 'pending' },
-    { id: 'routingComment', name: 'Routing-Comment ', status: 'pending' },
-  ];
-
+ 
 
   // Sadece generalInfoData.messages'ı gösteriyoruz
   const allMessages = React.useMemo(() => {
