@@ -107,7 +107,10 @@ export const transformPoliceReportData = (rawData) => {
                 firstName: formattedFirstName,
                 lastName: formattedLastName,
                 belgeNo: formattedBelgeNo,
-                birthDate: getValueOrEmptyString(room.DOGUMTARIHI)
+                birthDate: getValueOrEmptyString(room.DOGUMTARIHI),
+                uyruk: getValueOrEmptyString(room.UYRUGU),
+                belgeTuru: getValueOrEmptyString(room.KIMLIKBELGESITURU),
+                ikametAdresi: getValueOrEmptyString(room.IKAMETADRESI),
             };
         });
 

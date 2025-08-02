@@ -71,23 +71,30 @@ export const transformInhouseData = (rawData) => {
     const roomsArray = Array.isArray(inhouseRooms) ? inhouseRooms : [inhouseRooms];
 
 
-    transformedRecords = roomsArray.map((room, index) => {
+     // Sayısal değerleri kontrol eden yardımcı fonksiyon
+     const getValueOrEmptyString = (value) => {
+      // Değer null veya undefined ise boş string döndür, aksi takdirde değeri olduğu gibi kullan
+      // Not: 0 değeri false olmadığı için bu kontrol 0'ı koruyacaktır.
+      return (value === null || value === undefined) ? '' : value;
+    };
 
+
+    transformedRecords = roomsArray.map((room, index) => {
       return {
-        roomNo: room.ROOM || '',
-        name: room.FULL_NAME || '',
-        companyName: room.COMPANY_NAME || '',
-        rateCode: room.RATE_CODE || '',
-        rate: room.SHARE_AMOUNT === null || room.SHARE_AMOUNT === undefined ? '' : room.SHARE_AMOUNT,
-        accompanyNames: room.ACCOMPANYING_NAMES || '',
-        paymentMethod: room.PAYMENT_METHOD || '',
-        currencyCode: room.CURRENCY_CODE || '',
-        adults: room.ADULTS === null || room.ADULTS === undefined ? '' : room.ADULTS,
-        children: room.CHILDREN === null || room.CHILDREN === undefined ? '' : room.CHILDREN,
-        balance: room.BALANCE === null || room.BALANCE === undefined ? '' : room.BALANCE,
-        departureDate: room.DEPARTURE || '',
-        arrivalDate: room.ARRIVAL || '',
-        comment: room.LIST_G_COMMENT_RESV_NAME_ID || ''
+        roomNo: getValueOrEmptyString(room.ROOM),
+        name: getValueOrEmptyString(room.FULL_NAME),
+        companyName: getValueOrEmptyString(room.COMPANY_NAME),
+        rateCode: getValueOrEmptyString(room.RATE_CODE),
+        rate: getValueOrEmptyString(room.SHARE_AMOUNT),
+        accompanyNames: getValueOrEmptyString(room.ACCOMPANYING_NAMES),
+        paymentMethod: getValueOrEmptyString(room.PAYMENT_METHOD),
+        currencyCode: getValueOrEmptyString(room.CURRENCY_CODE),
+        adults: getValueOrEmptyString(room.ADULTS),
+        children: getValueOrEmptyString(room.CHILDREN),
+        balance: getValueOrEmptyString(room.BALANCE),
+        departureDate: getValueOrEmptyString(room.DEPARTURE),
+        arrivalDate: getValueOrEmptyString(room.ARRIVAL),
+        comment: getValueOrEmptyString(room.LIST_G_COMMENT_RESV_NAME_ID)
       };
     });
 

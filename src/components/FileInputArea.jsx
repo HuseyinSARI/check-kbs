@@ -20,6 +20,8 @@ function FileInputArea({ onFileSelect, isLoading }) {
     rawCashringData,
     processedCashringData,
 
+    mainTableData,
+
     rawKBSData,
     processedKBSData,
     kbsErrorsData,
@@ -73,6 +75,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
     
     console.log("kbsErrorsData :", kbsErrorsData);
     console.log("generalOperaErrorsData :", generalOperaErrorsData);
+    console.log("mainTableData :", mainTableData);
     
   };
 

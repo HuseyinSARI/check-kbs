@@ -43,14 +43,19 @@ export const DataProvider = ({ children }) => {
     { id: 'routingComment', name: 'Routing-Comment ', status: 'pending' },
   ]);
 
-  // YENİ: Tek bir kontrolün durumunu güncellemek için fonksiyon
-  const updateCheckStatus = (checkId, newStatus) => {
-    setChecks(prevChecks =>
-      prevChecks.map(check =>
+  // updateCheckStatus fonksiyonunu useCallback ile sarıyoruz
+  const updateCheckStatus = useCallback((checkId, newStatus) => {
+    setChecks(prevChecks => {
+      // Yalnızca durum gerçekten farklıysa güncelle
+      const checkToUpdate = prevChecks.find(check => check.id === checkId);
+      if (checkToUpdate && checkToUpdate.status === newStatus) {
+        return prevChecks; // Değişiklik yok, eski state'i döndür
+      }
+      return prevChecks.map(check =>
         check.id === checkId ? { ...check, status: newStatus } : check
-      )
-    );
-  };
+      );
+    });
+  }, []);
 
   const [generalInfoData, setGeneralInfoData] = useState({
     messages: [{

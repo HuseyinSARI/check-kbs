@@ -34,7 +34,6 @@ export const parseCashringXML = (file) => {
                 const parser = new XMLParser(options);
                 const json = parser.parse(xmlString);
 
-                console.log(json);
 
                 if (!json?.P2009_BALANCEBYWINDOW?.LIST_G_ROOM?.G_ROOM) { 
                     throw new Error(`Geçerli bir Cashring dosyası yükleyin.`);
