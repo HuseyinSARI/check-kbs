@@ -131,7 +131,7 @@ export const transformKBSData = (rawData) => {
             const adRaw = getValueOrEmptyString(row['Adý']);
             const soyadRaw = getValueOrEmptyString(row['Soyadý']);
 
-            const fixedAd = fixTurkishChars(adRaw);
+            const fixedAd = fixTurkishChars(adRaw); 
             const fixedSoyad = fixTurkishChars(soyadRaw);
 
             const formattedAd = formatNameSurname(fixedAd);

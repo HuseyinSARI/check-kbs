@@ -39,8 +39,6 @@ export const DataProvider = ({ children }) => {
     { id: 'guestCount', name: 'Kişi Sayısı ', status: 'pending' }, // Başlangıçta pending olabilir
     { id: 'tcPassport', name: 'TC/Pasaport ', status: 'pending' },
     { id: 'birth_date_check', name: 'Doğum Tarihi ', status: 'pending' },
-    { id: 'clCa', name: 'CL/CA ', status: 'pending' },
-    { id: 'routingComment', name: 'Routing-Comment ', status: 'pending' },
   ]);
 
   // updateCheckStatus fonksiyonunu useCallback ile sarıyoruz

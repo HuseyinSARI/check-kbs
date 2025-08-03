@@ -91,11 +91,11 @@ function TableSection() {
         cell: info => <div style={fixedWidthStyle}>{info.getValue()}</div>,
         enableSorting: true,
       },
-      { 
-        accessorKey: 'rate', 
-        header: 'Rate', 
-        cell: info => info.getValue(), 
-        enableSorting: true 
+      {
+        accessorKey: 'rate',
+        header: 'Rate',
+        cell: info => info.getValue(),
+        enableSorting: true
       },
       { accessorKey: 'comment', header: 'Comment', cell: info => info.getValue(), enableSorting: false },
       { accessorKey: 'cinDate', header: 'C/in Date', cell: info => info.getValue(), enableSorting: true },
@@ -113,7 +113,7 @@ function TableSection() {
         { accessorKey: 'odaDegeri', header: 'Oda Değeri', cell: info => info.getValue(), enableSorting: true },
       ];
     }
-    
+
     return baseColumns;
   }, [processedCashringData]);
 
@@ -178,15 +178,20 @@ function TableSection() {
                     const { 
                       highlightRateCell, 
                       highlightCommentCell, 
-                      highlightCaClCell 
+                      highlightCaClCell,
+                      highlightCompanyCell 
                     } = getControlStyles(rowData);
 
                     return (
                       <tr key={row.id}>
                         {row.getVisibleCells().map(cell => {
                           let cellStyle = {};
-                          
+
                           // Koşullara göre stili ata
+                          if (cell.column.id === 'company' && highlightCompanyCell) {
+                            cellStyle.backgroundColor = '#ff6347'; // Parlak kırmızı
+                          }
+
                           if (cell.column.id === 'comment' && highlightCommentCell) {
                             cellStyle.backgroundColor = '#fff3cd';
                           }
@@ -196,9 +201,8 @@ function TableSection() {
                           }
 
                           if (cell.column.id === 'rate' && highlightRateCell) {
-                              cellStyle.backgroundColor = '#ff6347';
+                            cellStyle.backgroundColor = '#ff6347'; // Parlak kırmızı
                           }
-
                           return (
                             <td key={cell.id} style={cellStyle}>
                               {flexRender(cell.column.columnDef.cell, cell.getContext())}

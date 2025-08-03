@@ -110,7 +110,7 @@ function KBSErrorsSection() {
                                             <Col sm={4} md={3} key={error.id}>
                                                 <Card className="shadow-sm border-danger h-100">
                                                     <Card.Header className="bg-danger text-white py-2 d-flex justify-content-between align-items-center">
-                                                        <strong className="w-100 text-center">Oda No: {error.odaNo}</strong> 
+                                                        <strong className="w-100 text-center fs-4">Oda No: {error.odaNo}</strong> 
                                                         <Button
                                                             variant="link"
                                                             className="text-white p-0 position-absolute end-0 me-2" 

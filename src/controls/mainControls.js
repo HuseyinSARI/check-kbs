@@ -62,12 +62,12 @@ export const useMainControls = () => {
                 return count + (errorDetail.kbsGuest ? 1 : 0) + (errorDetail.operaGuest ? 1 : 0);
             }, 0);
 
-            const successMessage = 'KBS ve Polis Raporu arasında hiçbir uyumsuzluk bulunamadı. Harika!';
+            const successMessage = '🥳 🥳 KBS ve Polis Raporu arasında hiçbir uyumsuzluk bulunamadı. Harika!';
             const warningMessage = `KBS/Opera uyumsuzluğu için ${Object.keys(kbsComparisonErrors).length} oda ve ${totalErrorGuestCount} hatalı misafir verisi bulundu.`;
 
             if (Object.keys(kbsComparisonErrors).length === 0) {
                 if (!sentMessagesRef.current[successMessage]) {
-                    addGeneralInfo('success', successMessage, 'system');
+                    addGeneralInfo('info', successMessage, 'system');
                     sentMessagesRef.current[successMessage] = true;
                 }
             } else {
@@ -91,7 +91,7 @@ export const useMainControls = () => {
                 return [...otherErrors, ...birthDateErrors];
             });
 
-            const successMessage = 'Polis Raporu\'nda boş doğum tarihi hatası bulunamadı.';
+            const successMessage = '🥳 🥳 Polis Raporu\'nda boş doğum tarihi hatası bulunamadı.';
             const warningMessage = `Polis Raporu'nda ${birthDateErrors.length} misafir için boş doğum tarihi bulundu.`;
 
             if (birthDateErrors.length > 0) {
@@ -101,7 +101,7 @@ export const useMainControls = () => {
                 }
             } else {
                 if (!sentMessagesRef.current[successMessage]) {
-                    addGeneralInfo('success', successMessage, 'system');
+                    addGeneralInfo('info', successMessage, 'system');
                     sentMessagesRef.current[successMessage] = true;
                 }
             }
@@ -121,7 +121,7 @@ export const useMainControls = () => {
                 return [...otherErrors, ...guestCountErrors];
             });
 
-            const successMessage = 'Inhouse dosyasında kişi sayısı tutarsızlığı bulunamadı.';
+            const successMessage = '🥳🥳 Inhouse dosyasında kişi sayısı tutarsızlığı bulunamadı.';
             const warningMessage = `Inhouse dosyasında ${guestCountErrors.length} oda için kişi sayısı tutarsızlığı bulundu.`;
 
             if (guestCountErrors.length > 0) {
@@ -131,7 +131,7 @@ export const useMainControls = () => {
                 }
             } else {
                 if (!sentMessagesRef.current[successMessage]) {
-                    addGeneralInfo('success', successMessage, 'system');
+                    addGeneralInfo('info', successMessage, 'system');
                     sentMessagesRef.current[successMessage] = true;
                 }
             }
@@ -151,7 +151,7 @@ export const useMainControls = () => {
                 return [...otherErrors, ...tcPassportErrors];
             });
 
-            const successMessage = 'TC/Pasaport kontrollerinde herhangi bir sorun bulunamadı.';
+            const successMessage = '🥳 🥳TC/Pasaport kontrollerinde herhangi bir sorun bulunamadı.';
             const warningMessage = `TC/Pasaport kontrollerinde ${tcPassportErrors.length} hata bulundu.`;
 
             if (tcPassportErrors.length > 0) {
@@ -160,8 +160,8 @@ export const useMainControls = () => {
                     sentMessagesRef.current[warningMessage] = true;
                 }
             } else {
-                if (!hasInfoMessage('success', successMessage)) {
-                    addGeneralInfo('success', successMessage, 'system');
+                if (!hasInfoMessage('info', successMessage)) {
+                    addGeneralInfo('info', successMessage, 'system');
                     sentMessagesRef.current[successMessage] = true;
                 }
             }
