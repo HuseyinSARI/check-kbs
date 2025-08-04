@@ -150,7 +150,7 @@ function TableSection() {
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {header.isPlaceholder ? null : (
-                          <div className="d-flex align-items-center justify-content-center">
+                          <div className="d-flex align-items-center justify-content-center ">
                             {flexRender(
                               header.column.columnDef.header,
                               header.getContext()

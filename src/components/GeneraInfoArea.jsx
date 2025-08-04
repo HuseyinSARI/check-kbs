@@ -71,7 +71,7 @@ function GeneralInfoArea() {
                     // Referansımızı buraya atıyoruz
                     ref={messagesEndRef}
                     style={{
-                        maxHeight: '190px',
+                        height: '430px',
                         overflowY: 'auto',
                         paddingRight: '10px'
                     }}

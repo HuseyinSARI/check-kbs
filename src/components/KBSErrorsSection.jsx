@@ -1,15 +1,15 @@
 // src/components/KBSErrorsSection.jsx
-import React, { useState, useMemo, useEffect } from 'react'; // useEffect'i import edin
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, Collapse, Row, Col, Spinner } from 'react-bootstrap';
 import { useData } from '../context/DataContext';
 
 function KBSErrorsSection() {
     const [open, setOpen] = useState(true);
-    const [hasMounted, setHasMounted] = useState(false); // Yeni state: Bileşenin istemcide monte edilip edilmediğini tutar
+    const [hasMounted, setHasMounted] = useState(false);
 
     const { 
         kbsErrorsData,  
-        checks // checks durumunu DataContext'ten alıyoruz
+        checks
     } = useData();
 
     const [dismissedErrors, setDismissedErrors] = useState(new Set());
@@ -33,21 +33,13 @@ function KBSErrorsSection() {
         setDismissedErrors(prev => new Set(prev).add(idToRemove));
     };
 
-    // KBS/Polis Raporu kontrolünün mevcut durumunu al
     const kbsPoliceReportCheckStatus = checks.find(check => check.id === 'kbs_police_report')?.status;
-
-    // Kapatılan hataları dikkate alarak gerçekte gösterilecek hata sayısı
     const remainingErrorCount = formattedKbsErrors.length;
 
-    // Bu useEffect, bileşen tarayıcıda (istemci tarafında) ilk kez monte edildiğinde çalışır.
-    // Bu sayede, sunucu tarafında render edilen HTML ile istemci tarafında React'in "hydration" yaptığı HTML'in
-    // tutarlı kalmasını sağlarız. kbsPoliceReportCheckStatus gibi dinamik değerler istemci tarafında stabil hale gelir.
     useEffect(() => {
         setHasMounted(true);
     }, []);
 
-    // Eğer bileşen henüz istemcide monte edilmediyse (yani ilk sunucu renderı veya hydration öncesi ise),
-    // tutarlı bir placeholder döndürüyoruz.
     if (!hasMounted) {
         return (
             <Card className="mb-4 shadow-lg">
@@ -55,7 +47,6 @@ function KBSErrorsSection() {
                     <i className="bi bi-exclamation-triangle-fill me-2"></i> KBS Hataları
                 </Card.Header>
                 <Card.Body>
-                    {/* <p> yerine <div> kullanıldı, çünkü <p> içine <div> (Spinner) gelemez */}
                     <div className="text-info lead">Yükleniyor...</div> 
                 </Card.Body>
             </Card>
@@ -81,22 +72,17 @@ function KBSErrorsSection() {
             <Collapse in={open}>
                 <div id="kbs-errors-collapse-text">
                     <Card.Body>
-                        {/* 1. Durum: Dosyalar henüz yüklenmediyse (kontrol pending ise) */}
-                        {/* Bu kontrol artık sadece hasMounted true olduktan sonra (istemcide) değerlendirilir. */}
                         {kbsPoliceReportCheckStatus === 'pending' ? (
                             <div className="text-info lead">
                                 <Spinner animation="border" size="sm" className="me-2" />
                                 **Dosyaların yüklenmesi bekleniyor ve karşılaştırma yapılıyor...**
                             </div>
                         ) : (
-                            /* 2. Durum: Kontrol tamamlandıysa */
                             remainingErrorCount === 0 ? (
-                                // Kontrol tamamlandı VE gösterilecek hata yoksa (ya hiç yoktu ya da hepsi kapatıldı)
                                 <p className="text-success lead">
                                     <i className="bi bi-check-circle-fill me-2"></i> **Harika! Hiçbir KBS hatası bulunamadı veya tüm hatalar giderildi.**
                                 </p>
                             ) : (
-                                // Kontrol tamamlandı VE gösterilecek hatalar varsa
                                 <Row className="g-3">
                                     {formattedKbsErrors.map((error) => {
                                         const kbsGuestsForDisplay = error.errorDetails.filter(
@@ -125,7 +111,7 @@ function KBSErrorsSection() {
                                                     </Card.Header>
                                                     <Card.Body>
                                                         <div className="d-flex"> 
-                                                            <div style={{ flex: 1, borderRight: '1px solid #eee', paddingRight: '10px' }}>
+                                                            <div style={{ flex: 1, paddingRight: '10px' }}>
                                                                 <h6 className="text-primary text-center mb-1">KBS</h6>
                                                                 <div>
                                                                     {kbsGuestsForDisplay.length > 0 ? (
@@ -134,6 +120,8 @@ function KBSErrorsSection() {
                                                                                 <small><strong>Ad:</strong> {detail.kbsGuest.ad || '-'}</small><br/>
                                                                                 <small><strong>Soyad:</strong> {detail.kbsGuest.soyad || '-'}</small><br/>
                                                                                 <small><strong>Belge No:</strong> {detail.kbsGuest.belgeNo || '-'}</small>
+                                                                                {/* Son misafirden sonra çizgi eklememek için kontrol yapıldı */}
+                                                                                {idx < kbsGuestsForDisplay.length - 1 && <hr className="my-1" />}
                                                                             </div>
                                                                         ))
                                                                     ) : (
@@ -141,7 +129,9 @@ function KBSErrorsSection() {
                                                                     )}
                                                                 </div>
                                                             </div>
-
+                                                            {/* Dikey bölücü çizgi */}
+                                                            <div className="vr mx-2"></div>
+                                                            
                                                             <div style={{ flex: 1, paddingLeft: '10px' }}>
                                                                 <h6 className="text-success text-center mb-1">OPERA</h6>
                                                                 <div>
@@ -151,6 +141,8 @@ function KBSErrorsSection() {
                                                                                 <small><strong>Ad:</strong> {detail.operaGuest.ad || '-'}</small><br/>
                                                                                 <small><strong>Soyad:</strong> {detail.operaGuest.soyad || '-'}</small><br/>
                                                                                 <small><strong>Belge No:</strong> {detail.operaGuest.belgeNo || '-'}</small>
+                                                                                {/* Son misafirden sonra çizgi eklememek için kontrol yapıldı */}
+                                                                                {idx < operaGuestsForDisplay.length - 1 && <hr className="my-1" />}
                                                                             </div>
                                                                         ))
                                                                     ) : (

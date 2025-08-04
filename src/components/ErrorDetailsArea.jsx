@@ -38,7 +38,7 @@ function ErrorDetailsArea() {
         </Card.Title>
         <div 
           style={{ 
-            height: '400px', 
+            height: '600px', 
             overflowY: 'auto',  
             paddingRight: '10px'
           }}
