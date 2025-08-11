@@ -1,22 +1,18 @@
-// src/components/ErrorDetailsArea.jsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, Button, Alert, Spinner } from 'react-bootstrap';
 import { useData } from '../context/DataContext';
 
 function ErrorDetailsArea() {
-  // Hataları, güncelleme fonksiyonunu ve ilgili tüm raw data state'lerini DataContext'ten alıyoruz
   const { 
     generalOperaErrorsData, 
     setGeneralOperaErrorsData, 
-    rawInhouseData, // Her bir raw data'yı çektik
+    rawInhouseData, 
     rawKBSData,
     rawPolisRaporuData,
     rawRoutingData,
     rawCashringData,
   } = useData();
 
-  // Herhangi bir dosyanın yüklenip yüklenmediğini kontrol eden yeni bir flag
-  // raw data state'lerinden herhangi biri null değilse, bir dosya yüklenmiş demektir.
   const hasAnyFileUploaded = 
     rawInhouseData !== null ||
     rawKBSData !== null ||
@@ -24,7 +20,28 @@ function ErrorDetailsArea() {
     rawRoutingData !== null ||
     rawCashringData !== null;
 
-  // Hata silme işlevi: Seçilen hatayı listeden kaldırır
+  // useMemo ile hata listesini oda numarasına göre sıralıyoruz
+  const sortedErrors = useMemo(() => {
+    if (!generalOperaErrorsData || generalOperaErrorsData.length === 0) {
+      return [];
+    }
+
+    // Orijinal diziyi bozmamak için bir kopyasını oluşturuyoruz
+    return [...generalOperaErrorsData].sort((a, b) => {
+      // roomNo alanını sayıya dönüştürüyoruz
+      const roomNoA = parseInt(a.roomNo, 10);
+      const roomNoB = parseInt(b.roomNo, 10);
+
+      // Sayı olmayan veya tanımsız değerleri en sona atıyoruz
+      if (isNaN(roomNoA) && isNaN(roomNoB)) return 0;
+      if (isNaN(roomNoA)) return 1;
+      if (isNaN(roomNoB)) return -1;
+
+      // Sayısal olarak karşılaştırıyoruz
+      return roomNoA - roomNoB;
+    });
+  }, [generalOperaErrorsData]); // generalOperaErrorsData değiştiğinde yeniden hesapla
+
   const handleDeleteError = (idToRemove) => {
     const updatedErrors = generalOperaErrorsData.filter((error) => error.id !== idToRemove);
     setGeneralOperaErrorsData(updatedErrors);
@@ -39,30 +56,29 @@ function ErrorDetailsArea() {
         <div 
           style={{ 
             height: '600px', 
-            overflowY: 'auto',  
+            overflowY: 'auto', 
             paddingRight: '10px'
           }}
           className="error-list-container"
         >
-          {/* hasAnyFileUploaded durumuna göre içeriği koşullu olarak render etme */}
           {!hasAnyFileUploaded ? (
-            // 1. Durum: Henüz hiçbir dosya yüklenmediyse
             <div className="text-info lead text-center">
               <Spinner animation="border" size="sm" className="me-2" />
               **Bir dosya yüklenmesi bekleniyor...**
             </div>
           ) : (
-            // 2. Durum: En az bir dosya yüklendiyse (kontrollerin başlamış veya bitmiş olması beklenir)
-            generalOperaErrorsData.length > 0 ? ( 
-              // Hatalar varsa, hata listesini göster
+            // sortedErrors listesini kullanıyoruz
+            sortedErrors.length > 0 ? ( 
               <ul className="list-unstyled">
-                {generalOperaErrorsData.map((error) => ( 
+                {sortedErrors.map((error, index) => ( 
                   <li 
-                    key={error.id || `${error.type}-${error.message}`} 
+                    key={error.id || `${error.type}-${index}`} 
                     className="d-flex justify-content-between align-items-center mb-2 p-2 border rounded"
                     style={{ backgroundColor: '#fff3cd', borderColor: '#ffc107', color: '#856404' }}
                   >
-                    <span className="me-auto text-break">{error.message}</span>
+                    <span className="me-auto text-break">
+                        {error.message}
+                    </span>
                     <Button
                       variant="link"
                       className="text-danger p-0 ms-2"
@@ -75,7 +91,6 @@ function ErrorDetailsArea() {
                 ))}
               </ul>
             ) : (
-              // Hata yoksa, başarı mesajını göster
               <Alert variant="success" className="text-center">
                 <i className="bi bi-check-circle-fill me-2"></i> Harika! Hiçbir genel hata bulunamadı.
               </Alert>

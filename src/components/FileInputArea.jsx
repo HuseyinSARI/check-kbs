@@ -1,5 +1,5 @@
 // src/components/FileInputArea.jsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, Form, Button, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import { useWindowSize } from 'react-use';
 import Confetti from 'react-confetti';
@@ -16,16 +16,18 @@ function FileInputArea({ onFileSelect, isLoading }) {
 
   const {
     rawInhouseData,
-    processedInhouseData,
-    rawPolisRaporuData,
-    processedPolisRaporuData,
-    rawRoutingData,
-    processedRoutingData,
-    rawCashringData,
-    processedCashringData,
-    mainTableData,
     rawKBSData,
+    rawPolisRaporuData,
+    rawRoutingData,
+    rawCashringData,
+
+    processedInhouseData, 
     processedKBSData,
+    processedPolisRaporuData,
+    processedRoutingData,
+    processedCashringData,
+    
+    mainTableData,
     kbsErrorsData,
     generalOperaErrorsData,
     addGeneralInfo,
@@ -68,6 +70,35 @@ function FileInputArea({ onFileSelect, isLoading }) {
     console.log("generalOperaErrorsData :", generalOperaErrorsData);
     console.log("mainTableData :", mainTableData);
   };
+  
+  // Her bir dosyanın durumunu kontrol eden useMemo hook'u
+  const fileStatuses = useMemo(() => {
+    const statuses = {};
+    
+    const hasError = (keyword) => {
+      // generalOperaErrorsData içinde ilgili anahtar kelimeyi içeren bir hata var mı kontrol et
+      return generalOperaErrorsData.some(err => err.message.includes(keyword));
+    };
+
+    statuses.inhouse = processedInhouseData?.length > 0 ? 'valid' : hasError('inhouse') ? 'invalid' : null;
+    statuses.kbs = processedKBSData?.length > 0 ? 'valid' : hasError('KBS') ? 'invalid' : null;
+    statuses.policeReport = processedPolisRaporuData?.length > 0 ? 'valid' : hasError('Polis Raporu') ? 'invalid' : null;
+    statuses.routing = processedRoutingData?.length > 0 ? 'valid' : hasError('routing') ? 'invalid' : null;
+    statuses.cashring = processedCashringData?.length > 0 ? 'valid' : hasError('cashring') ? 'invalid' : null;
+    
+    return statuses;
+  }, [processedInhouseData, processedKBSData, processedPolisRaporuData, processedRoutingData, processedCashringData, generalOperaErrorsData]);
+
+  // Butonlar için dinamik className belirleyen yardımcı fonksiyon
+  const getFileClass = (fileType) => {
+    if (fileStatuses[fileType] === 'valid') {
+      return 'is-valid';
+    }
+    if (fileStatuses[fileType] === 'invalid') {
+      return 'is-invalid';
+    }
+    return '';
+  };
 
   return (
     <Card className="shadow-sm">
@@ -76,18 +107,13 @@ function FileInputArea({ onFileSelect, isLoading }) {
           <Confetti
             width={width}
             height={height}
-            // Kalp parçacıkları için özel ayarlar
-            // Aşağıdan yukarıya değil, yukarıdan aşağıya akması için
             confettiSource={{ x: 0, y: -20, w: width, h: height * 0.1 }}
-            colors={['#ff729f', '#ffc0cb', '#f25088']} // Pembe tonları
-            // Kalp şeklini oluşturmak için bir render fonksiyonu
-            // Bu kısım confettinin şeklini değiştirir
+            colors={['#ff729f', '#ffc0cb', '#f25088']}
             drawShape={ctx => {
               const x = 0;
               const y = 0;
               const width = 50;
               const height = 50;
-
               ctx.moveTo(x + width / 2, y + height / 4);
               ctx.bezierCurveTo(x + width, y, x + width, y + height / 2, x + width / 2, y + height);
               ctx.bezierCurveTo(x, y + height / 2, x, y, x + width / 2, y + height / 4);
@@ -106,6 +132,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 onChange={(e) => handleFileChange(e, 'inhouse')}
                 accept=".xml"
                 disabled={isLoading}
+                className={getFileClass('inhouse')}
               />
             </Form.Group>
           </Col>
@@ -117,6 +144,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 onChange={(e) => handleFileChange(e, 'kbs')}
                 accept=".xlsx"
                 disabled={isLoading}
+                className={getFileClass('kbs')}
               />
             </Form.Group>
           </Col>
@@ -128,6 +156,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 onChange={(e) => handleFileChange(e, 'policeReport')}
                 accept=".xml"
                 disabled={isLoading}
+                className={getFileClass('policeReport')}
               />
             </Form.Group>
           </Col>
@@ -139,6 +168,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 onChange={(e) => handleFileChange(e, 'routing')}
                 accept=".xml"
                 disabled={isLoading}
+                className={getFileClass('routing')}
               />
             </Form.Group>
           </Col>
@@ -150,6 +180,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 onChange={(e) => handleFileChange(e, 'cashring')}
                 accept=".xml"
                 disabled={isLoading}
+                className={getFileClass('cashring')}
               />
             </Form.Group>
           </Col>

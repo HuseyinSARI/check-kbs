@@ -21,8 +21,9 @@ export const checkMissingBirthDates = (polisRaporuData) => {
         if (!guest.birthDate || String(guest.birthDate).trim() === '') {
             errors.push({
                 type: 'MISSING_BIRTH_DATE',
-                message: `Oda No: ${guest.roomNo || '-'}, Misafir: ${guest.firstName || '-'} ${guest.lastName || '-' } için doğum tarihi boş.`
-                // Diğer ilgili misafir bilgileri buraya eklenebilir
+                message: `Oda No: ${guest.roomNo || '-'}, Misafir: ${guest.firstName || '-'} ${guest.lastName || '-' } için doğum tarihi boş.`,
+                // Yeni: Oda numarasını ayrı bir özellik olarak ekle
+                roomNo: guest.roomNo || '-' 
             });
         }
     });
@@ -66,7 +67,9 @@ export const checkGuestCountConsistency = (processedInhouseData) => {
             errors.push({
                 id: `guestcount-error-${guest.roomNo}-${guest.name}-${Date.now()}-${Math.random()}`,
                 type: 'GUEST_COUNT_MISMATCH',
-                message: `Oda No: ${guest.roomNo || '-'} için kişi sayısı uyuşmuyor.`
+                message: `Oda No: ${guest.roomNo || '-'} için kişi sayısı uyuşmuyor.`,
+                // Yeni: Oda numarasını ayrı bir özellik olarak ekle
+                roomNo: guest.roomNo || '-' 
             });
         }
     });
@@ -93,16 +96,16 @@ export const checkTcPassportConsistency = (processedPolisRaporuData) => {
         
         // Kontrol 1, 2, 3, 4: Boş alan kontrolü
         if (!guest.belgeNo) {
-            errors.push({ id: uuidv4(), type: 'MISSING_BELGENO', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belge no boş.`, guest });
+            errors.push({ id: uuidv4(), type: 'MISSING_BELGENO', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belge no boş.`, guest, roomNo: guest.roomNo });
         }
         if (!guest.belgeTuru) {
-            errors.push({ id: uuidv4(), type: 'MISSING_BELGETURU', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belge türü boş.`, guest });
+            errors.push({ id: uuidv4(), type: 'MISSING_BELGETURU', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belge türü boş.`, guest, roomNo: guest.roomNo });
         }
         if (!guest.ikametAdresi) {
-            errors.push({ id: uuidv4(), type: 'MISSING_IKAMET_ADRESI', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için ikamet adresi boş.`, guest });
+            errors.push({ id: uuidv4(), type: 'MISSING_IKAMET_ADRESI', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için ikamet adresi boş.`, guest, roomNo: guest.roomNo });
         }
         if (!guest.uyruk) {
-            errors.push({ id: uuidv4(), type: 'MISSING_UYRUK', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için uyruk boş.`, guest });
+            errors.push({ id: uuidv4(), type: 'MISSING_UYRUK', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için uyruk boş.`, guest, roomNo: guest.roomNo });
         }
 
         // Eğer temel alanlar eksikse, detaylı kontrolleri atla
@@ -117,23 +120,23 @@ export const checkTcPassportConsistency = (processedPolisRaporuData) => {
 
             // Kontrol 5: Belge Türü TCKN ise uyruk TC olmalı
             if (guest.uyruk.toUpperCase() !== 'TC') {
-                errors.push({ id: uuidv4(), type: 'TC_UYRUK_MISMATCH', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeTuru TCKN iken uyruk TC değil.`, guest });
+                errors.push({ id: uuidv4(), type: 'TC_UYRUK_MISMATCH', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeTuru TCKN iken uyruk TC değil.`, guest, roomNo: guest.roomNo });
             }
 
             // Kontrol 6: Belge Türü TCKN ise ikamet adresi Turkey olmalı
             if (guest.ikametAdresi.toUpperCase() !== 'TURKEY') {
-                errors.push({ id: uuidv4(), type: 'TC_IKAMET_MISMATCH', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeTuru TCKN iken ikamet adresi Turkey değil.`, guest });
+                errors.push({ id: uuidv4(), type: 'TC_IKAMET_MISMATCH', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeTuru TCKN iken ikamet adresi Turkey değil.`, guest, roomNo: guest.roomNo });
             }
 
             // Kontrol 7 & 10: BelgeNo 11 haneli ve sayı mı?
             if (!isTc) {
                 // Eğer 9x ile başlamıyorsa ve 11 hane değilse hata ver
                 if (!startsWith9x) {
-                    errors.push({ id: uuidv4(), type: 'TC_BELGENO_INVALID', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için TCKN numarası 11 hane ve sayı olmalı.`, guest });
+                    errors.push({ id: uuidv4(), type: 'TC_BELGENO_INVALID', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için TCKN numarası 11 hane ve sayı olmalı.`, guest, roomNo: guest.roomNo });
                 }
             } else if (startsWith9x && isTc) {
                 // Kontrol 10: TCKN 97,98,99 ile başlıyorsa ve 11 haneli sayıysa, BelgeTuru PAS olmalıydı
-                 errors.push({ id: uuidv4(), type: 'TCKN_9X_WARNING', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeNo 9x ile başlıyor, bu TCKN yerine Pasaport olabilir.`, guest });
+                 errors.push({ id: uuidv4(), type: 'TCKN_9X_WARNING', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeNo 9x ile başlıyor, bu TCKN yerine Pasaport olabilir.`, guest, roomNo: guest.roomNo });
             }
         }
         
@@ -141,11 +144,11 @@ export const checkTcPassportConsistency = (processedPolisRaporuData) => {
         if (guest.belgeTuru === 'PAS') {
             // Kontrol 8: Pasaport ise uyruk TC olamaz
             if (guest.uyruk.toUpperCase() === 'TC') {
-                errors.push({ id: uuidv4(), type: 'PAS_UYRUK_TC', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeTuru PAS iken uyruk TC.`, guest });
+                errors.push({ id: uuidv4(), type: 'PAS_UYRUK_TC', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeTuru PAS iken uyruk TC.`, guest, roomNo: guest.roomNo });
             }
             // Kontrol 9: Pasaport ise ikamet adresi Turkey olamaz
             if (guest.ikametAdresi.toUpperCase() === 'TURKEY') {
-                errors.push({ id: uuidv4(), type: 'PAS_IKAMET_TURKEY', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeTuru PAS iken ikamet adresi Turkey.`, guest });
+                errors.push({ id: uuidv4(), type: 'PAS_IKAMET_TURKEY', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeTuru PAS iken ikamet adresi Turkey değil.`, guest, roomNo: guest.roomNo });
             }
         }
     });
