@@ -84,7 +84,15 @@ export const transformPoliceReportData = (rawData) => {
         const guests = rawData?.P2203_POLISRAPORU?.LIST_G_VERILENODANO?.G_VERILENODANO || [];
         const guestsArray = Array.isArray(guests) ? guests : [guests]; // Tek kayıt varsa diziye çevir
 
-        transformedRecords = guestsArray.map((room, index) => {
+        // Sadece cin ve cout tarihleri farklı olan kayıtları filtrele
+        const filteredGuests = guestsArray.filter(room => {
+            const cin = room.GELISTARIHI;
+            const cout = room.AYRILISTARIHI;
+            // 'cin' ve 'cout' tarihleri aynıysa bu kaydı hariç tut
+            return cin && cout && cin !== cout;
+        });
+
+        transformedRecords = filteredGuests.map((room, index) => {
             // Helper function: Boş string yerine sadece null/undefined ise boş string atar, 0'ı korur.
             const getValueOrEmptyString = (value) => {
                 return value === null || value === undefined ? '' : value;
@@ -111,6 +119,8 @@ export const transformPoliceReportData = (rawData) => {
                 uyruk: getValueOrEmptyString(room.UYRUGU),
                 belgeTuru: getValueOrEmptyString(room.KIMLIKBELGESITURU),
                 ikametAdresi: getValueOrEmptyString(room.IKAMETADRESI),
+                cin: getValueOrEmptyString(room.GELISTARIHI),
+                cout: getValueOrEmptyString(room.AYRILISTARIHI)
             };
         });
 
