@@ -4,21 +4,21 @@
 const GUNES_EXPRESS_RATE_CONDITIONS = {
   rateCode: 'A02',
   company: 'Gunes Ekspres Hava',
-  rate: 156.8
+  rate: 62.72
 };
 
 // Pegasus Hava Taşımacılığı için geçerli özel koşullar.
 const PEGASUS_RATE_CONDITIONS = {
   rateCode: 'A03',
   company: 'Pegasus Hava Tasim',
-  rate: 108.86
+  rate: 78.62
 };
 
 // Türk Hava Yolları için geçerli özel koşullar.
 const THY_RATE_CONDITIONS = {
   rateCode: 'A0SYTHY',
   company: 'Turk Hava Yollari',
-  rate: 6330
+  rate: 2477
 };
 
 /**
@@ -48,17 +48,33 @@ export const getControlStyles = (rowData) => {
   }
 
   // Rate ve Comment uyumsuzluğu kontrolü
-  if (comment && !comment.startsWith("2 ")) {
-      const commentMatch = comment.match(/^(\d+([,.]\d+)?)/);
-      if (commentMatch) {
-          const commentNumber = parseFloat(commentMatch[1].replace(',', '.'));
-          const rateNumber = parseFloat(String(rate).replace(',', '.'));
+//   if (comment && !comment.startsWith("2 ")) {
+//       const commentMatch = comment.match(/^(\d+([,.]\d+)?)/);
+//       if (commentMatch) {
+//           const commentNumber = parseFloat(commentMatch[1].replace(',', '.'));
+//           const rateNumber = parseFloat(String(rate).replace(',', '.'));
           
-          if (rateNumber !== commentNumber) {
-              highlightRateCell = true;
-          }
-      }
+//           if (rateNumber !== commentNumber) {
+//               highlightRateCell = true;
+//           }
+//       }
+//   }
+
+  // Rate ve Comment uyumsuzluğu kontrolü
+  // "2 " ile başlamayan yorumlar için bu kontrolü çalıştır.
+  if (comment && !comment.startsWith("2 ")) {
+    const rateNumber = parseFloat(String(rate).replace(',', '.'));
+    const commentString = String(comment).replace(',', '.'); // Kümesteki tüm virgülleri noktaya çevir
+
+    // Rate değeri, yorumun içinde herhangi bir yerde sayısal veya string olarak bulunuyor mu kontrol et.
+    const isRateInComment = commentString.includes(rateNumber.toString());
+
+    if (!isRateInComment) {
+      // Eğer rate yorumda bulunmuyorsa hata yak
+      highlightRateCell = true;
+    }
   }
+
   
   // --- EKSTRA KONTROLLER: Özel rateCode'lar için geçerli ---
   // Bu kontroller, yukarıdaki genel kontrollerle birlikte çalışır.

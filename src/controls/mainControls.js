@@ -8,6 +8,8 @@ import {
     checkTcPassportConsistency
 } from './basicControls';
 
+import { checkRoutingComments } from './checkRoutingComments'; // <-- Yeni import
+
 /**
  * useMainControls Hook'u:
  * Yüklenen verilerde çeşitli kontrolleri tetikler ve sonuçları DataContext'e yazar.
@@ -15,24 +17,25 @@ import {
  */
 
 //  TODO: YAPILACAK KONTROLLER LİSTESİ
-        //  doğum tarihi boşmu dolumu                                  ok
-        //  kişi sayısı doğru mu ayarlanmı                             ok
-        //  3 lü girilen commentlerin hepsi aynı mı             
-        //  kbs-opeara uyumlu mu                                       ok
-        //  commnette yazan rate ile gerçek rate aynı mı
-        //  pasaport pas-tc doğru mu girilmiş                          ok
-        //  pasaport pas-tc kısmı boş mu                               ok
-        //  pas - tr - uyruk doğru mu girilmiş                         ok
-        //  ekip commetleri doğru mu
-        //  compary veya agent girilen kişiye routing yapılmışmı
-        //  peristera-extert-abh ler CL-mi
-        //  pegasus-sunexp  routingli olanlar CL mi
-        //  
+//  doğum tarihi boşmu dolumu                                  ok
+//  kişi sayısı doğru mu ayarlanmı                             ok
+//  3 lü girilen commentlerin hepsi aynı mı             
+//  kbs-opeara uyumlu mu                                       ok
+//  commnette yazan rate ile gerçek rate aynı mı
+//  pasaport pas-tc doğru mu girilmiş                          ok
+//  pasaport pas-tc kısmı boş mu                               ok
+//  pas - tr - uyruk doğru mu girilmiş                         ok
+//  ekip commetleri doğru mu
+//  compary veya agent girilen kişiye routing yapılmışmı
+//  peristera-extert-abh ler CL-mi
+//  pegasus-sunexp  routingli olanlar CL mi
+//  
 export const useMainControls = () => {
     const {
         processedKBSData,
         processedPolisRaporuData,
         processedInhouseData,
+        processedRoutingData,
         setGeneralOperaErrorsData,
         setKbsErrorsData,
         addGeneralInfo,
@@ -172,6 +175,37 @@ export const useMainControls = () => {
             setGeneralOperaErrorsData(prevErrors => prevErrors.filter(e => !e.type.startsWith('TC_') && !e.type.startsWith('PAS_') && e.type !== 'MISSING_BELGENO' && e.type !== 'MISSING_BELGETURU' && e.type !== 'MISSING_IKAMET_ADRESI' && e.type !== 'MISSING_UYRUK'));
         }
 
+        // --- Kontrol 5: Routing Yorumları Kontrolü ---
+        if (processedInhouseData.length > 0 && processedRoutingData.length > 0) {
+            const routingCommentErrors = checkRoutingComments(processedInhouseData, processedRoutingData);
+
+            // Hataları biriktiriyoruz
+            setGeneralOperaErrorsData(prevErrors => {
+                const otherErrors = prevErrors.filter(e => e.type !== 'ROUTING_COMMENT_MISMATCH');
+                return [...otherErrors, ...routingCommentErrors];
+            });
+
+            const successMessage = '🥳🥳 Routing yorumlarında herhangi bir sorun bulunamadı.';
+            const warningMessage = `Routing yorumlarında ${routingCommentErrors.length} hata bulundu.`;
+
+            if (routingCommentErrors.length > 0) {
+                if (!hasInfoMessage('warning', warningMessage)) {
+                    addGeneralInfo('warning', warningMessage, 'system');
+                    sentMessagesRef.current[warningMessage] = true;
+                }
+            } else {
+                if (!hasInfoMessage('info', successMessage)) {
+                    addGeneralInfo('info', successMessage, 'system');
+                    sentMessagesRef.current[successMessage] = true;
+                }
+            }
+            // newChecksStatus['routingComments'] = 'completed';
+        } else {
+            // newChecksStatus['routingComments'] = 'pending';
+            // Eğer veri yoksa ilgili hataları temizle
+            setGeneralOperaErrorsData(prevErrors => prevErrors.filter(e => e.type !== 'ROUTING_COMMENT_MISMATCH'));
+        }
+
         // Son olarak, tüm kontrol durumlarını birleştirip tek bir çağrıyla güncelle
         const checksToUpdate = Object.keys(newChecksStatus);
         checksToUpdate.forEach(checkId => {
@@ -188,6 +222,7 @@ export const useMainControls = () => {
         setKbsErrorsData,
         setGeneralOperaErrorsData,
         addGeneralInfo,
+        processedRoutingData, 
         checks, // Artık `checks` state'ini bağımlılık olarak kullanıyoruz
         generalInfoData // Bağımlılık olarak kalmalı
     ]);

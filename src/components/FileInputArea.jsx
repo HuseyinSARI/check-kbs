@@ -30,7 +30,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
     mainTableData,
     kbsErrorsData,
     generalOperaErrorsData,
-    addGeneralInfo,
+    generalInfoData,
     setProcessedInhouseData
   } = useData();
 
@@ -69,6 +69,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
     console.log("kbsErrorsData :", kbsErrorsData);
     console.log("generalOperaErrorsData :", generalOperaErrorsData);
     console.log("mainTableData :", mainTableData);
+    console.log("generalInfoData :", generalInfoData);
   };
   
   // Her bir dosyanın durumunu kontrol eden useMemo hook'u
@@ -77,13 +78,13 @@ function FileInputArea({ onFileSelect, isLoading }) {
     
     const hasError = (keyword) => {
       // generalOperaErrorsData içinde ilgili anahtar kelimeyi içeren bir hata var mı kontrol et
-      return generalOperaErrorsData.some(err => err.message.includes(keyword));
-    };
+      return generalInfoData.messages.some(msg => msg.text.includes(keyword));
 
-    statuses.inhouse = processedInhouseData?.length > 0 ? 'valid' : hasError('inhouse') ? 'invalid' : null;
+    };
+    statuses.inhouse = processedInhouseData?.length > 0 ? 'valid' : hasError('Geçerli bir inhouse dosyası yükleyin') ? 'invalid' : null;
     statuses.kbs = processedKBSData?.length > 0 ? 'valid' : hasError('KBS') ? 'invalid' : null;
-    statuses.policeReport = processedPolisRaporuData?.length > 0 ? 'valid' : hasError('Polis Raporu') ? 'invalid' : null;
-    statuses.routing = processedRoutingData?.length > 0 ? 'valid' : hasError('routing') ? 'invalid' : null;
+    statuses.policeReport = processedPolisRaporuData?.length > 0 ? 'valid' : hasError('Geçerli bir polis_raporu dosyası yükleyin') ? 'invalid' : null;
+    statuses.routing = processedRoutingData?.length > 0 ? 'valid' : hasError('Geçerli bir routing_details dosyası yükleyin') ? 'invalid' : null;
     statuses.cashring = processedCashringData?.length > 0 ? 'valid' : hasError('cashring') ? 'invalid' : null;
     
     return statuses;
@@ -99,6 +100,18 @@ function FileInputArea({ onFileSelect, isLoading }) {
     }
     return '';
   };
+
+    // Etiketler için dinamik className belirleyen yardımcı fonksiyon
+    const getLabelClass = (fileType) => {
+      if (fileStatuses[fileType] === 'valid') {
+          return 'fw-bold text-success';
+      }
+      if (fileStatuses[fileType] === 'invalid') {
+          return 'fw-bold text-danger';
+      }
+      return '';
+  };
+
 
   return (
     <Card className="shadow-sm">
@@ -126,7 +139,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
         <Row className="g-3">
           <Col md>
             <Form.Group controlId="formFileInhouse" className="mb-2">
-              <Form.Label>Inhouse (gih01103) </Form.Label>
+            <Form.Label className={getLabelClass('inhouse')}>Inhouse (gih01103) </Form.Label>
               <Form.Control
                 type="file"
                 onChange={(e) => handleFileChange(e, 'inhouse')}
@@ -138,7 +151,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
           </Col>
           <Col md>
             <Form.Group controlId="formFileKBS" className="mb-2">
-              <Form.Label>KBS </Form.Label>
+            <Form.Label className={getLabelClass('kbs')}>KBS </Form.Label>
               <Form.Control
                 type="file"
                 onChange={(e) => handleFileChange(e, 'kbs')}
@@ -150,7 +163,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
           </Col>
           <Col md>
             <Form.Group controlId="formFilePolice" className="mb-2">
-              <Form.Label>Polis Raporu (p2203)</Form.Label>
+            <Form.Label className={getLabelClass('policeReport')}>Polis Raporu (p2203)</Form.Label>
               <Form.Control
                 type="file"
                 onChange={(e) => handleFileChange(e, 'policeReport')}
@@ -162,7 +175,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
           </Col>
           <Col md>
             <Form.Group controlId="formFileRouting" className="mb-2">
-              <Form.Label>Routing Details (XML)</Form.Label>
+            <Form.Label className={getLabelClass('routing')}>Routing Details (XML)</Form.Label>
               <Form.Control
                 type="file"
                 onChange={(e) => handleFileChange(e, 'routing')}
@@ -174,7 +187,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
           </Col>
           <Col md>
             <Form.Group controlId="formFileCashring" className="mb-2">
-              <Form.Label>Cashring (p2009)</Form.Label>
+            <Form.Label className={getLabelClass('cashring')}>Cashring (p2009)</Form.Label>
               <Form.Control
                 type="file"
                 onChange={(e) => handleFileChange(e, 'cashring')}
