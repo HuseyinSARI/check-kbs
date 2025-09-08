@@ -1,25 +1,15 @@
 import { v4 as uuidv4 } from 'uuid';
 
-// Yardımcı fonksiyon: Değer null veya undefined ise boş string döndürür, aksi halde değeri olduğu gibi döndürür.
 const getValueOrEmptyString = (value) => {
     return (value === null || value === undefined) ? '' : value;
 };
 
-/**
- * İşlenmiş inhouse, routing ve cashring verilerini birleştirerek ana tablo verisini oluşturur.
- * Boş veya undefined gelen değerler yerine boş bir string ("") koyar.
- * Yorum verisi için özel bir işlem yapar: Eğer bir dizi ise "CAS" veya "RES" tipi yorumu öncelik sırasına göre bulup alır.
- *
- * @param {Array<Object>} inhouseData - İşlenmiş inhouse verisi.
- * @param {Array<Object>} routingData - İşlenmiş routing verisi (bir dizi olarak gelir).
- * @param {Object} cashringData - İşlenmiş cashring verisi (oda numarasına göre nesne).
- * @returns {Array<Object>} Ana tablo için birleştirilmiş veri listesi.
- */
 export const processMainTable = (inhouseData, routingData, cashringData) => {
     if (!inhouseData || inhouseData.length === 0) {
         return [];
     }
 
+    // Routing verisini oda numarasına göre bir Map'e dönüştürme
     const routingMap = new Map();
     if (Array.isArray(routingData)) {
         routingData.forEach(route => {
@@ -29,46 +19,50 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
         });
     }
 
+    // --- YENİ EKLENECEK KISIM ---
+    // Cashring verisini oda numarasına göre bir Map'e dönüştürme
+    const cashringMap = new Map();
+    if (Array.isArray(cashringData)) {
+        cashringData.forEach(item => {
+            if (item.roomNo) {
+                cashringMap.set(item.roomNo, item);
+            }
+        });
+    }
+
     const mainTable = inhouseData.map(inhouseGuest => {
         const roomNo = inhouseGuest.roomNo;
+        
+        // Map'ten verileri güvenli bir şekilde al
         const routingInfo = routingMap.get(roomNo) || {};
-        const cashringInfo = cashringData[roomNo] || {};
+        const cashringInfo = cashringMap.get(roomNo) || {}; // Artık bu satır doğru çalışacak
 
         let commentValue = "";
         const rawComment = getValueOrEmptyString(inhouseGuest.comment);
 
         if (rawComment) {
-            // Case 1: G_COMMENT_RESV_NAME_ID bir dizi ise
             if (Array.isArray(rawComment.G_COMMENT_RESV_NAME_ID)) {
-                const cashieringComment = rawComment.G_COMMENT_RESV_NAME_ID.find(
-                    (item) => item.RES_COMMENT_TYPE === "CAS"
-                );
-                const reservationComment = rawComment.G_COMMENT_RESV_NAME_ID.find(
-                    (item) => item.RES_COMMENT_TYPE === "RES"
-                );
+                const cashieringComment = rawComment.G_COMMENT_RESV_NAME_ID.find((item) => item.RES_COMMENT_TYPE === "CAS");
+                const reservationComment = rawComment.G_COMMENT_RESV_NAME_ID.find((item) => item.RES_COMMENT_TYPE === "RES");
 
                 if (cashieringComment) {
                     commentValue = getValueOrEmptyString(cashieringComment.RES_COMMENT);
                 } else if (reservationComment) {
                     commentValue = getValueOrEmptyString(reservationComment.RES_COMMENT);
                 }
-            }
-            // Case 2: G_COMMENT_RESV_NAME_ID bir nesne ise
-            else if (rawComment.G_COMMENT_RESV_NAME_ID) {
+            } else if (rawComment.G_COMMENT_RESV_NAME_ID) {
                 if (rawComment.G_COMMENT_RESV_NAME_ID.RES_COMMENT) {
                     commentValue = getValueOrEmptyString(rawComment.G_COMMENT_RESV_NAME_ID.RES_COMMENT);
                 } else {
                     commentValue = getValueOrEmptyString(rawComment.RES_COMMENT);
                 }
-            }
-            // Case 3: Yorum verisi doğrudan RES_COMMENT anahtarını içeriyorsa
-            else if (rawComment.RES_COMMENT) {
+            } else if (rawComment.RES_COMMENT) {
                 commentValue = getValueOrEmptyString(rawComment.RES_COMMENT);
             }
         }
 
         let routingValue = "";
-        const rawRouting = routingInfo.routingList?.G_ROUTING; 
+        const rawRouting = routingInfo.routingList?.G_ROUTING;
 
         if (rawRouting) {
             const routingItems = Array.isArray(rawRouting) ? rawRouting : [rawRouting];
@@ -77,7 +71,6 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
                 .map(route => {
                     const text = getValueOrEmptyString(route.TRX_STRING).replace("Routed to ", "").trim();
                     const cleanText = text.endsWith(':') ? text.slice(0, -1) : text;
-                    
                     const match = cleanText.match(/^(\d{3,4})\s/);
                     if (match) {
                         return match[1];
@@ -109,6 +102,7 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
             cinDate: getValueOrEmptyString(inhouseGuest.arrivalDate),
             coutDate: getValueOrEmptyString(inhouseGuest.departureDate),
             balance: getValueOrEmptyString(inhouseGuest.balance),
+            // Map'ten gelen güvenli veriyi kullanıyoruz
             win1: getValueOrEmptyString(cashringInfo.win1),
             win2: getValueOrEmptyString(cashringInfo.win2),
             odaDegeri: getValueOrEmptyString(cashringInfo.accRate),
