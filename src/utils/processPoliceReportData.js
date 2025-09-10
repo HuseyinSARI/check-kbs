@@ -108,6 +108,15 @@ export const transformPoliceReportData = (rawData) => {
             const rawBelgeNo = getValueOrEmptyString(room.KIMLIKSERINO || room.BelgeNo); // Esneklik için farklı alan adlarını kontrol et
             const formattedBelgeNo = String(rawBelgeNo).replace(/ı/g, 'i').toLowerCase();
 
+            let rawIkametAdresi = getValueOrEmptyString(room.IKAMETADRESI);
+
+            // Verinin başında ve sonunda olabilecek boşlukları ve istenmeyen karakterleri temizle
+            // Örneğin: ". TURKEY" -> "TURKEY"
+            // Örneğin: " TURKEY." -> "TURKEY"
+            if (typeof rawIkametAdresi === 'string') {
+                rawIkametAdresi = rawIkametAdresi.trim();
+                rawIkametAdresi = rawIkametAdresi.replace(/^[.\s]+|[.\s]+$/g, '');
+            }
 
             // Bu alanları gerçek Polis Raporu XML yapınızdaki etiket isimlerine göre ayarlamalısınız!
             return {
@@ -118,7 +127,7 @@ export const transformPoliceReportData = (rawData) => {
                 birthDate: getValueOrEmptyString(room.DOGUMTARIHI),
                 uyruk: getValueOrEmptyString(room.UYRUGU),
                 belgeTuru: getValueOrEmptyString(room.KIMLIKBELGESITURU),
-                ikametAdresi: getValueOrEmptyString(room.IKAMETADRESI),
+                ikametAdresi: rawIkametAdresi,
                 cin: getValueOrEmptyString(room.GELISTARIHI),
                 cout: getValueOrEmptyString(room.AYRILISTARIHI)
             };

@@ -108,8 +108,46 @@ function TableSection() {
       baseColumns = [
         ...baseColumns,
         { accessorKey: 'balance', header: 'Balance', cell: info => info.getValue(), enableSorting: true },
-        { accessorKey: 'win1', header: 'Win1', cell: info => info.getValue(), enableSorting: false },
-        { accessorKey: 'win2', header: 'Win2', cell: info => info.getValue(), enableSorting: false },
+        {
+          accessorKey: 'win1',
+          header: 'Win1',
+          cell: info => {
+            const { cashringValue, routingValue } = info.getValue();
+            return (
+              <div className="d-flex flex-column">
+                {routingValue && (
+                  <div className="text-secondary fw-bold" style={{ fontSize: '0.8rem' }}>
+                    {routingValue}
+                  </div>
+                )}
+                <div className="fw-bold">
+                  {cashringValue}
+                </div>
+              </div>
+            );
+          },
+          enableSorting: false,
+        },
+        {
+          accessorKey: 'win2',
+          header: 'Win2',
+          cell: info => {
+            const { cashringValue, routingName } = info.getValue();
+            return (
+              <div className="d-flex flex-column">
+                {routingName && (
+                  <div className="text-secondary fw-bold" style={{ fontSize: '0.8rem' }}>
+                    {routingName}
+                  </div>
+                )}
+                <div className="fw-bold">
+                  {cashringValue}
+                </div>
+              </div>
+            );
+          },
+          enableSorting: false,
+        },
         { accessorKey: 'odaDegeri', header: 'Oda Değeri', cell: info => info.getValue(), enableSorting: true },
       ];
     }
