@@ -11,14 +11,20 @@ const GUNES_EXPRESS_RATE_CONDITIONS = {
 const PEGASUS_RATE_CONDITIONS = {
   rateCode: 'A03',
   company: 'Pegasus Hava Tasim',
-  rate: 78.62
+  rate: 70.15
 };
 
 // Türk Hava Yolları için geçerli özel koşullar.
 const THY_RATE_CONDITIONS = {
   rateCode: 'A0SYTHY',
   company: 'Turk Hava Yollari',
-  rate: 2477
+  rate: 2626
+};
+
+const AJET_RATE_CONDITIONS = {
+  rateCode: 'A0SYTHY', 
+  company: 'Ajet Hava Tasima', 
+  rate: 2626 
 };
 
 /**
@@ -28,37 +34,24 @@ const THY_RATE_CONDITIONS = {
 */
 export const getControlStyles = (rowData) => {
   const { rate, comment, caCl, rateCode, company } = rowData;
-  
+
   // Varsayılan olarak tüm hücreler için hata yok kabul edilir.
   let highlightCompanyCell = false;
   let highlightRateCell = false;
   let highlightCommentCell = false;
   let highlightCaClCell = false;
-  
+
   // --- GENEL KONTROLLER: Tüm odalar için geçerli ---
-  
+
   // Comment'in "2 " ile başlayıp başlamadığı kontrolü
   if (comment && comment.startsWith("2 ")) {
-      highlightCommentCell = true;
+    highlightCommentCell = true;
   }
 
   // CA/ CL'nin "CL" olup olmadığı kontrolü
   if (caCl === 'CL') {
-      highlightCaClCell = true;
+    highlightCaClCell = true;
   }
-
-  // Rate ve Comment uyumsuzluğu kontrolü
-//   if (comment && !comment.startsWith("2 ")) {
-//       const commentMatch = comment.match(/^(\d+([,.]\d+)?)/);
-//       if (commentMatch) {
-//           const commentNumber = parseFloat(commentMatch[1].replace(',', '.'));
-//           const rateNumber = parseFloat(String(rate).replace(',', '.'));
-          
-//           if (rateNumber !== commentNumber) {
-//               highlightRateCell = true;
-//           }
-//       }
-//   }
 
   // Rate ve Comment uyumsuzluğu kontrolü
   // "2 " ile başlamayan yorumlar için bu kontrolü çalıştır.
@@ -75,50 +68,55 @@ export const getControlStyles = (rowData) => {
     }
   }
 
-  
+
   // --- EKSTRA KONTROLLER: Özel rateCode'lar için geçerli ---
   // Bu kontroller, yukarıdaki genel kontrollerle birlikte çalışır.
-  
+
   // Gunes Ekspres koşulu
   if (rateCode === GUNES_EXPRESS_RATE_CONDITIONS.rateCode) {
-      if (company !== GUNES_EXPRESS_RATE_CONDITIONS.company) {
-          highlightCompanyCell = true;
-      }
+    if (company !== GUNES_EXPRESS_RATE_CONDITIONS.company) {
+      highlightCompanyCell = true;
+    }
 
-      const currentRate = parseFloat(String(rate).replace(',', '.'));
-      if (currentRate !== GUNES_EXPRESS_RATE_CONDITIONS.rate) {
-          highlightRateCell = true;
-      }
+    const currentRate = parseFloat(String(rate).replace(',', '.'));
+    if (currentRate !== GUNES_EXPRESS_RATE_CONDITIONS.rate) {
+      highlightRateCell = true;
+    }
   }
-  
+
   // Pegasus koşulu
   if (rateCode === PEGASUS_RATE_CONDITIONS.rateCode) {
-      if (company !== PEGASUS_RATE_CONDITIONS.company) {
-          highlightCompanyCell = true;
-      }
+    if (company !== PEGASUS_RATE_CONDITIONS.company) {
+      highlightCompanyCell = true;
+    }
 
-      const currentRate = parseFloat(String(rate).replace(',', '.'));
-      if (currentRate !== PEGASUS_RATE_CONDITIONS.rate) {
-          highlightRateCell = true;
-      }
+    const currentRate = parseFloat(String(rate).replace(',', '.'));
+    if (currentRate !== PEGASUS_RATE_CONDITIONS.rate) {
+      highlightRateCell = true;
+    }
   }
-  
-  // Türk Hava Yolları koşulu
-  if (rateCode === THY_RATE_CONDITIONS.rateCode) {
-      if (company !== THY_RATE_CONDITIONS.company) {
-          highlightCompanyCell = true;
-      }
 
-      const currentRate = parseFloat(String(rate).replace(',', '.'));
-      if (currentRate !== THY_RATE_CONDITIONS.rate) {
-          highlightRateCell = true;
-      }
+  // 👈 Türk Hava Yolları ve AnadoluJet (AJET) Ortak Koşulu
+  if (rateCode === THY_RATE_CONDITIONS.rateCode) {
+    const isTHYCompany = company === THY_RATE_CONDITIONS.company;
+    const isAJETCompany = company === AJET_RATE_CONDITIONS.company;
+
+    // Şirket Adı Kontrolü: Rate kodu A0SYTHY ise, şirket adı THY VEYA AJET olmalıdır.
+    if (!isTHYCompany && !isAJETCompany) {
+      highlightCompanyCell = true;
+    }
+
+    // Rate Kontrolü: Rate kodu A0SYTHY ise, rate 2626 olmalıdır.
+    const currentRate = parseFloat(String(rate).replace(',', '.'));
+    if (currentRate !== THY_RATE_CONDITIONS.rate) {
+      highlightRateCell = true;
+    }
   }
 
   return {
-      highlightRateCell,
-      highlightCommentCell,
-      highlightCaClCell,
-      highlightCompanyCell
+    highlightRateCell,
+    highlightCommentCell,
+    highlightCaClCell,
+    highlightCompanyCell
   };
 };

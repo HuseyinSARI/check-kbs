@@ -119,19 +119,42 @@ export const transformKBSData = (rawData) => {
         return value === null || value === undefined ? '' : value;
     };
 
+    const getKeyValue = (row, correctKey) => {
+        // Hatalı (bozuk) kodlama varsayımı: 'ı' -> 'ý' ve 'i' -> 'ý'
+        // Örn: 'Adı' -> 'Adý', 'Soyadı' -> 'Soyadý'
+        const incorrectKey = correctKey.replace(/ı/g, 'ý').replace(/i/g, 'ý');
+
+        let rawValue;
+
+        // 1. Önce doğru Türkçe karakterli anahtarı dene
+        if (row[correctKey] !== undefined) {
+            rawValue = row[correctKey];
+        }
+        // 2. Doğru anahtar yoksa, hatalı kodlanmış anahtarı dene
+        else if (row[incorrectKey] !== undefined) {
+            rawValue = row[incorrectKey];
+        }
+        // 3. İkisi de yoksa undefined kalır
+        else {
+            rawValue = undefined;
+        }
+
+        return getValueOrEmptyString(rawValue);
+    };
+
     try {
         transformedRecords = rawData.map((row, rowIndex) => {
+
             const tcNoRaw = getValueOrEmptyString(row['T.C. No']);
             const belgeNoRaw = getValueOrEmptyString(row['Belge No']);
 
             // unifiedBelgeNo string'e çevrildikten sonra tüm harfleri küçük harfe dönüştürülür.
             const unifiedBelgeNo = fixTurkishChars((tcNoRaw !== '' ? tcNoRaw.toString() : belgeNoRaw.toString()).toLowerCase());
-            
-            // Ad ve Soyad önce fixTurkishChars ile İngilizceye çevrilir, sonra formatlanır.
-            const adRaw = getValueOrEmptyString(row['Adý']);
-            const soyadRaw = getValueOrEmptyString(row['Soyadý']);
 
-            const fixedAd = fixTurkishChars(adRaw); 
+            const adRaw = getKeyValue(row, 'Adı');    
+            const soyadRaw = getKeyValue(row, 'Soyadı'); 
+
+            const fixedAd = fixTurkishChars(adRaw);
             const fixedSoyad = fixTurkishChars(soyadRaw);
 
             const formattedAd = formatNameSurname(fixedAd);
