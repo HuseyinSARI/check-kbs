@@ -14,7 +14,6 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
         routingData.forEach(route => {
             const roomNo = route.roomNo;
             if (roomNo) {
-                // routingList.G_ROUTING'in dizi veya nesne olduğunu kontrol et
                 const rawRouting = route.routingList?.G_ROUTING;
                 const routingItems = Array.isArray(rawRouting) ? rawRouting : (rawRouting ? [rawRouting] : []);
                 
@@ -37,11 +36,46 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
 
     const mainTable = inhouseData.map(inhouseGuest => {
         const roomNo = inhouseGuest.roomNo;
-        
         const routingListForRoom = routingMap.get(roomNo) || [];
         const cashringInfo = cashringMap.get(roomNo) || {};
 
-        // Win1 ve Win2 için routing isimlerini bulma
+        // --- COMMENT BİRLEŞTİRME ---
+        let commentValue = "";
+        const rawCommentData = inhouseGuest.LIST_G_COMMENT_RESV_NAME_ID || inhouseGuest.comment;
+        if (rawCommentData && rawCommentData.G_COMMENT_RESV_NAME_ID) {
+            const commentsArray = Array.isArray(rawCommentData.G_COMMENT_RESV_NAME_ID) 
+                ? rawCommentData.G_COMMENT_RESV_NAME_ID 
+                : [rawCommentData.G_COMMENT_RESV_NAME_ID];
+            commentValue = commentsArray
+                .map(item => getValueOrEmptyString(item.RES_COMMENT).trim())
+                .filter(text => text !== "")
+                .join(" || ");
+        } else if (rawCommentData && rawCommentData.RES_COMMENT) {
+            commentValue = getValueOrEmptyString(rawCommentData.RES_COMMENT);
+        }
+
+        // --- ROUTING AYRIŞTIRMA (TO & FROM) ---
+        
+        // 1. "Routed to" temizliği: Sadece baştaki ibareyi at, BB/HB gibi ekleri koru.
+        const toRoutes = routingListForRoom
+            .filter(route => getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to"))
+            .map(route => {
+                // Sadece en baştaki "Routed to " kısmını siler, gerisine dokunmaz.
+                return getValueOrEmptyString(route.TRX_STRING).replace(/^Routed to\s+/i, "").trim();
+            });
+
+        // 2. "Routed from" temizliği: Aynı şekilde sadece başı sil.
+        const fromRoutes = routingListForRoom
+            .filter(route => getValueOrEmptyString(route.TRX_STRING).startsWith("Routed from"))
+            .map(route => {
+                return getValueOrEmptyString(route.TRX_STRING).replace(/^Routed from\s+/i, "").trim();
+            });
+
+        // Tekrarları önle ve virgülle birleştir
+        let routingValue = toRoutes.length > 0 ? [...new Set(toRoutes)].join(', ') : "";
+        let routedFromValue = fromRoutes.length > 0 ? [...new Set(fromRoutes)].join(', ') : "";
+
+        // --- WIN1 & WIN2 ---
         const win1Routing = routingListForRoom.find(route => 
             route.RI_FOLIO_VIEW === 1 && getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to")
         );
@@ -49,57 +83,8 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
             route.RI_FOLIO_VIEW === 2 && getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to")
         );
 
-        let win1RoutingName = '';
-        if (win1Routing) {
-            win1RoutingName = getValueOrEmptyString(win1Routing.TRX_STRING).replace("Routed to ", "").trim().replace(":", "");
-        }
-
-        let win2RoutingName = '';
-        if (win2Routing) {
-            win2RoutingName = getValueOrEmptyString(win2Routing.TRX_STRING).replace("Routed to ", "").trim().replace(":", "");
-        }
-        
-        let commentValue = "";
-        const rawComment = getValueOrEmptyString(inhouseGuest.comment);
-
-        if (rawComment) {
-            if (Array.isArray(rawComment.G_COMMENT_RESV_NAME_ID)) {
-                const cashieringComment = rawComment.G_COMMENT_RESV_NAME_ID.find((item) => item.RES_COMMENT_TYPE === "CAS");
-                const reservationComment = rawComment.G_COMMENT_RESV_NAME_ID.find((item) => item.RES_COMMENT_TYPE === "RES");
-
-                if (cashieringComment) {
-                    commentValue = getValueOrEmptyString(cashieringComment.RES_COMMENT);
-                } else if (reservationComment) {
-                    commentValue = getValueOrEmptyString(reservationComment.RES_COMMENT);
-                }
-            } else if (rawComment.G_COMMENT_RESV_NAME_ID) {
-                if (rawComment.G_COMMENT_RESV_NAME_ID.RES_COMMENT) {
-                    commentValue = getValueOrEmptyString(rawComment.G_COMMENT_RESV_NAME_ID.RES_COMMENT);
-                } else {
-                    commentValue = getValueOrEmptyString(rawComment.RES_COMMENT);
-                }
-            } else if (rawComment.RES_COMMENT) {
-                commentValue = getValueOrEmptyString(rawComment.RES_COMMENT);
-            }
-        }
-        
-        // Routing sütunu için mevcut mantık
-        let routingValue = "";
-        const relevantRoutes = routingListForRoom
-            .filter(route => getValueOrEmptyString(route.TRX_STRING) && getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to"))
-            .map(route => {
-                const text = getValueOrEmptyString(route.TRX_STRING).replace("Routed to ", "").trim();
-                const cleanText = text.endsWith(':') ? text.slice(0, -1) : text;
-                const match = cleanText.match(/^(\d{3,4})\s/);
-                if (match) {
-                    return match[1];
-                }
-                return cleanText;
-            });
-        
-        if (relevantRoutes.length > 0) {
-            routingValue = relevantRoutes.join(', ');
-        }
+        let win1RoutingName = win1Routing ? getValueOrEmptyString(win1Routing.TRX_STRING).replace(/^Routed to\s+/i, "").trim() : '';
+        let win2RoutingName = win2Routing ? getValueOrEmptyString(win2Routing.TRX_STRING).replace(/^Routed to\s+/i, "").trim() : '';
         
         let processedCompany = getValueOrEmptyString(inhouseGuest.companyName);
         if (processedCompany.length > 3) {
@@ -112,7 +97,8 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
             name: getValueOrEmptyString(inhouseGuest.name),
             rateCode: getValueOrEmptyString(inhouseGuest.rateCode),
             company: processedCompany,
-            routing: routingValue, 
+            routing: routingValue,     // Örn: "Canyon Holidays Seya: BB"
+            routedFrom: routedFromValue, // Örn: "806 Mahmoud Mustafa: BB"
             rate: getValueOrEmptyString(inhouseGuest.rate),
             caCl: getValueOrEmptyString(inhouseGuest.paymentMethod),
             paraBirimi: getValueOrEmptyString(inhouseGuest.currencyCode),
@@ -120,8 +106,6 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
             cinDate: getValueOrEmptyString(inhouseGuest.arrivalDate),
             coutDate: getValueOrEmptyString(inhouseGuest.departureDate),
             balance: getValueOrEmptyString(inhouseGuest.balance),
-            
-            // win1 ve win2 verilerini özel bir obje olarak döndürüyoruz
             win1: {
                 cashringValue: getValueOrEmptyString(cashringInfo.win1),
                 routingName: win1RoutingName,

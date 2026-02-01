@@ -1,122 +1,73 @@
 // src/controls/rateControl.js
 
-// Gunes Ekspres Hava için geçerli özel koşullar.
-const GUNES_EXPRESS_RATE_CONDITIONS = {
-  rateCode: 'A02',
-  company: 'Gunes Ekspres Hava',
-  rate: 62.72
-};
-
-// Pegasus Hava Taşımacılığı için geçerli özel koşullar.
-const PEGASUS_RATE_CONDITIONS = {
-  rateCode: 'A03',
-  company: 'Pegasus Hava Tasim',
-  rate: 70.15
-};
-
-// Türk Hava Yolları için geçerli özel koşullar.
-const THY_RATE_CONDITIONS = {
-  rateCode: 'A0SYTHY',
-  company: 'Turk Hava Yollari',
-  rate: 2626
-};
-
-const AJET_RATE_CONDITIONS = {
-  rateCode: 'A0SYTHY', 
-  company: 'Ajet Hava Tasima', 
-  rate: 2626 
+/**
+ * Sayısal değeri temizleyip karşılaştırma için normalize eder.
+ * @param {string|number} value 
+ * @returns {string}
+ */
+const normalizePrice = (value) => {
+  if (!value) return "";
+  // Virgülleri noktaya çevir, rakam ve nokta dışındaki her şeyi sil
+  return String(value)
+      .replace(/,/g, '.') 
+      .replace(/[^0-9.]/g, '');
 };
 
 /**
-* Bir satırdaki verilere göre renklendirme koşullarını döndürür.
-* @param {object} rowData - Tablo satırına ait orijinal veri nesnesi.
-* @returns {object} - Hangi hücrelerin boyanması gerektiğini belirten koşul nesnesi.
+* Tablodaki rate değerinin comment içinde olup olmadığını kontrol eder.
+* Nokta/virgül farklılıklarını ve binlik ayırıcıları tolere eder.
 */
-export const getControlStyles = (rowData) => {
-  const { rate, comment, caCl, rateCode, company } = rowData;
+const isRateInComment = (rate, comment) => {
+  if (!rate || rate === 0 || rate === "0") return true; // Fiyat 0 ise kontrol etme
+  if (!comment) return false;
 
-  // Varsayılan olarak tüm hücreler için hata yok kabul edilir.
+  // 1. Rate'i temizle (Örn: 3405.63)
+  const cleanRate = normalizePrice(rate);
+  const rateNumber = parseFloat(cleanRate);
+
+  // 2. Comment içindeki sayısal olabilecek her şeyi yakala (3,405.60 gibi yapıları bozmadan)
+  // Bu regex; rakam, nokta ve virgül içeren grupları bulur.
+  const potentialPrices = comment.match(/[0-9][0-9,.]*/g) || [];
+
+  return potentialPrices.some(priceStr => {
+      // Comment içindeki her bir sayı adayını normalize et
+      // Eğer sayı binlik ayırıcı (,) içeriyorsa onu temizleyip noktaya çeviriyoruz
+      const cleanPriceStr = priceStr.replace(/,/g, ''); 
+      const commentPrice = parseFloat(cleanPriceStr);
+
+      // Kuruş farklarını tolere etmek için (Örn: 3405.60 vs 3405.63) 
+      // Math.abs kullanarak aradaki fark 1 birimden azsa "tamam" diyoruz.
+      // Eğer kuruşu kuruşuna aynı olsun istersen: return commentPrice === rateNumber;
+      return Math.abs(commentPrice - rateNumber) < 1; 
+  });
+};
+
+export const getControlStyles = (rowData) => {
+  const { rate, comment, caCl } = rowData;
+
   let highlightCompanyCell = false;
   let highlightRateCell = false;
   let highlightCommentCell = false;
   let highlightCaClCell = false;
 
-  // --- GENEL KONTROLLER: Tüm odalar için geçerli ---
-
-  // Comment'in "2 " ile başlayıp başlamadığı kontrolü
-  if (comment && comment.startsWith("2 ")) {
-    highlightCommentCell = true;
-  }
-
-  // CA/ CL'nin "CL" olup olmadığı kontrolü
+  // --- 1. CA/CL KONTROLÜ ---
   if (caCl === 'CL') {
-    highlightCaClCell = true;
+      highlightCaClCell = true;
   }
 
-  // Rate ve Comment uyumsuzluğu kontrolü
-  // "2 " ile başlamayan yorumlar için bu kontrolü çalıştır.
-  if (comment && !comment.startsWith("2 ")) {
-    const rateNumber = parseFloat(String(rate).replace(',', '.'));
-    const commentString = String(comment).replace(',', '.'); // Kümesteki tüm virgülleri noktaya çevir
-
-    // Rate değeri, yorumun içinde herhangi bir yerde sayısal veya string olarak bulunuyor mu kontrol et.
-    const isRateInComment = commentString.includes(rateNumber.toString());
-
-    if (!isRateInComment) {
-      // Eğer rate yorumda bulunmuyorsa hata yak
+  // --- 2. AKILLI RATE & COMMENT UYUMU ---
+  // Artık "2 " kontrolü yok. Tüm odalar için rate > 0 ise yorumda aranır.
+  if (!isRateInComment(rate, comment)) {
       highlightRateCell = true;
-    }
   }
 
-
-  // --- EKSTRA KONTROLLER: Özel rateCode'lar için geçerli ---
-  // Bu kontroller, yukarıdaki genel kontrollerle birlikte çalışır.
-
-  // Gunes Ekspres koşulu
-  if (rateCode === GUNES_EXPRESS_RATE_CONDITIONS.rateCode) {
-    if (company !== GUNES_EXPRESS_RATE_CONDITIONS.company) {
-      highlightCompanyCell = true;
-    }
-
-    const currentRate = parseFloat(String(rate).replace(',', '.'));
-    if (currentRate !== GUNES_EXPRESS_RATE_CONDITIONS.rate) {
-      highlightRateCell = true;
-    }
-  }
-
-  // Pegasus koşulu
-  if (rateCode === PEGASUS_RATE_CONDITIONS.rateCode) {
-    if (company !== PEGASUS_RATE_CONDITIONS.company) {
-      highlightCompanyCell = true;
-    }
-
-    const currentRate = parseFloat(String(rate).replace(',', '.'));
-    if (currentRate !== PEGASUS_RATE_CONDITIONS.rate) {
-      highlightRateCell = true;
-    }
-  }
-
-  // 👈 Türk Hava Yolları ve AnadoluJet (AJET) Ortak Koşulu
-  if (rateCode === THY_RATE_CONDITIONS.rateCode) {
-    const isTHYCompany = company === THY_RATE_CONDITIONS.company;
-    const isAJETCompany = company === AJET_RATE_CONDITIONS.company;
-
-    // Şirket Adı Kontrolü: Rate kodu A0SYTHY ise, şirket adı THY VEYA AJET olmalıdır.
-    if (!isTHYCompany && !isAJETCompany) {
-      highlightCompanyCell = true;
-    }
-
-    // Rate Kontrolü: Rate kodu A0SYTHY ise, rate 2626 olmalıdır.
-    const currentRate = parseFloat(String(rate).replace(',', '.'));
-    if (currentRate !== THY_RATE_CONDITIONS.rate) {
-      highlightRateCell = true;
-    }
-  }
+  // Not: Artık havayolları sabitleri kalktığı için highlightCompanyCell 
+  // şu anki mantıkta false dönecektir. Özel bir şirket kuralı gelirse buraya eklenebilir.
 
   return {
-    highlightRateCell,
-    highlightCommentCell,
-    highlightCaClCell,
-    highlightCompanyCell
+      highlightRateCell,
+      highlightCommentCell,
+      highlightCaClCell,
+      highlightCompanyCell
   };
 };

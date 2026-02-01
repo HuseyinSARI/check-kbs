@@ -2,11 +2,7 @@
 import { XMLParser } from 'fast-xml-parser';
 
 /**
- * Polis Raporu (p2203) XML dosyasından ham veriyi okur ve JSON objesine dönüştürür.
- * Ayrıca dosyanın Polis Raporu XML yapısına uygun olup olmadığını kontrol eder.
- * @param {File} file - Yüklenen Polis Raporu XML dosyası.
- * @returns {Promise<Object>} - Ham XML verisinin JSON hali.
- * @throws {Error} - Dosya okuma, ayrıştırma veya Polis Raporu yapısı kontrolünde hata oluşursa.
+ * Yeni Polis Raporu (POLICE_REPORT2) XML dosyasını okur.
  */
 export const parsePoliceReportXML = (file) => {
     return new Promise((resolve, reject) => {
@@ -15,127 +11,86 @@ export const parsePoliceReportXML = (file) => {
             return;
         }
 
-        const fileExtension = file.name.split('.').pop().toLowerCase();
-        if (fileExtension !== 'xml') {
-            reject(new Error(`Sadece XML dosyaları yüklenebilir. Yüklenen: ${file.name}`));
-            return;
-        }
-
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const xmlString = e.target.result;
-                const options = {
+                const parser = new XMLParser({
                     ignoreAttributes: false,
-                    attributeNamePrefix: "@",
-                    textNodeName: "#text"
-                };
-
-                const parser = new XMLParser(options);
+                    attributeNamePrefix: "@"
+                });
                 const json = parser.parse(xmlString);
 
-                if (!json?.P2203_POLISRAPORU?.LIST_G_VERILENODANO?.G_VERILENODANO)
-                    if (!json?.PoliceReport?.Guests?.Guest) {
-                        throw new Error(`Geçerli bir polis_raporu dosyası yükleyin`);
-                    }
+                if (!json?.POLICE_REPORT2) {
+                    throw new Error("Geçersiz format! Lütfen POLICE_REPORT2 XML dosyasını yükleyin.");
+                }
 
                 resolve(json);
             } catch (error) {
-                reject(new Error(error.message));
+                reject(new Error("XML Ayrıştırma Hatası: " + error.message));
             }
-        };
-        reader.onerror = (error) => {
-            reject(new Error(`"${file.name}" dosyası okuma hatası: ${error.target.error?.message || error.target.error || 'Bilinmeyen hata'}`));
         };
         reader.readAsText(file);
     });
 };
 
-/**
- * İsimleri ve soyisimleri formatlar (ilk harf büyük, diğerleri küçük).
- * İngilizce karakterlere göre formatlar.
- * @param {string} name - Formatlanacak isim veya soyisim.
- * @returns {string} - Formatlanmış metin.
- */
 const formatNameSurname = (name) => {
     if (typeof name !== 'string' || name.length === 0) return '';
-    return name.split(' ').map(word => {
+    return name.trim().split(/\s+/).map(word => {
         if (word.length === 0) return '';
-        // İngilizce karakterler üzerinde çalışıldığı için toUpperCase/toLowerCase yeterli
-        const firstChar = word.substring(0, 1).toUpperCase();
-        const restOfWord = word.substring(1).toLowerCase();
-        return firstChar + restOfWord;
+        return word[0].toUpperCase() + word.substring(1).toLowerCase();
     }).join(' ');
 };
 
-
-
 /**
- * Ham Polis Raporu XML verisinden işlenmiş veri dizisini oluşturur.
- * Bu fonksiyon, uygulamanın kullanabileceği belirli alanları ayıklayarak bir dizi döndürür.
- * @param {Object} rawData - Ham Polis Raporu XML verisinin JSON hali.
- * @returns {Array<Object>} - İstediğiniz alanları içeren işlenmiş veri objeleri dizisi.
+ * Verileri işler ve sadece RESV_STATUS === 'CKIN' olanları alır.
  */
 export const transformPoliceReportData = (rawData) => {
     let transformedRecords = [];
 
     try {
-        // Polis Raporu XML'indeki misafir listesine erişim (yapıya göre ayarlanmalı)
-        const guests = rawData?.P2203_POLISRAPORU?.LIST_G_VERILENODANO?.G_VERILENODANO || [];
-        const guestsArray = Array.isArray(guests) ? guests : [guests]; // Tek kayıt varsa diziye çevir
+        const nationalities = rawData.POLICE_REPORT2.LIST_G_NATIONALITY?.G_NATIONALITY || [];
+        const nationalitiesArray = Array.isArray(nationalities) ? nationalities : [nationalities];
 
-        // Sadece cin ve cout tarihleri farklı olan kayıtları filtrele
-        const filteredGuests = guestsArray.filter(room => {
-            const cin = room.GELISTARIHI;
-            const cout = room.AYRILISTARIHI;
-            // 'cin' ve 'cout' tarihleri aynıysa bu kaydı hariç tut
-            return cin && cout && cin !== cout;
-        });
+        nationalitiesArray.forEach(nat => {
+            const guests = nat.LIST_G_FIRST?.G_FIRST || [];
+            const guestsArray = Array.isArray(guests) ? guests : [guests];
+            
+            guestsArray.forEach(g => {
+                // KRİTİK FİLTRE: Sadece CKIN (Check-In) durumundaki misafirleri al
+                if (g.RESV_STATUS === 'CKIN') {
+                    
+                    const cin = g.TO_CHAR_RGV_TRUNC_ARRIVAL_PMS_;
+                    const cout = g.TO_CHAR_RGV_TRUNC_DEPARTURE_PM;
 
-        transformedRecords = filteredGuests.map((room, index) => {
-            // Helper function: Boş string yerine sadece null/undefined ise boş string atar, 0'ı korur.
-            const getValueOrEmptyString = (value) => {
-                return value === null || value === undefined ? '' : value;
-            };
+                    // Tarihleri kontrol et (Aynı gün giriş-çıkış değilse devam et)
+                    if (cin && cout && cin !== cout) {
+                        
+                        // ID Bilgilerini Güvenli Çekme
+                        const qIdData = g.LIST_Q_ID?.Q_ID;
+                        const idNumber = Array.isArray(qIdData) ? qIdData[0]?.ID_NUMBER : qIdData?.ID_NUMBER;
+                        const idType = Array.isArray(qIdData) ? qIdData[0]?.ID_TYPE : qIdData?.ID_TYPE;
 
-            const rawFirstName = getValueOrEmptyString(room.ADI);
-            const rawLastName = getValueOrEmptyString(room.SOYADI);
-
-            // İsim ve soyisimleri formatla
-            const formattedFirstName = formatNameSurname(rawFirstName);
-            const formattedLastName = formatNameSurname(rawLastName);
-
-            const rawBelgeNo = getValueOrEmptyString(room.KIMLIKSERINO || room.BelgeNo); // Esneklik için farklı alan adlarını kontrol et
-            const formattedBelgeNo = String(rawBelgeNo).replace(/ı/g, 'i').toLowerCase();
-
-            let rawIkametAdresi = getValueOrEmptyString(room.IKAMETADRESI);
-
-            // Verinin başında ve sonunda olabilecek boşlukları ve istenmeyen karakterleri temizle
-            // Örneğin: ". TURKEY" -> "TURKEY"
-            // Örneğin: " TURKEY." -> "TURKEY"
-            if (typeof rawIkametAdresi === 'string') {
-                rawIkametAdresi = rawIkametAdresi.trim();
-                rawIkametAdresi = rawIkametAdresi.replace(/^[.\s]+|[.\s]+$/g, '');
-            }
-
-            // Bu alanları gerçek Polis Raporu XML yapınızdaki etiket isimlerine göre ayarlamalısınız!
-            return {
-                roomNo: getValueOrEmptyString(room.VERILENODANO),
-                firstName: formattedFirstName,
-                lastName: formattedLastName,
-                belgeNo: formattedBelgeNo,
-                birthDate: getValueOrEmptyString(room.DOGUMTARIHI),
-                uyruk: getValueOrEmptyString(room.UYRUGU),
-                belgeTuru: getValueOrEmptyString(room.KIMLIKBELGESITURU),
-                ikametAdresi: rawIkametAdresi,
-                cin: getValueOrEmptyString(room.GELISTARIHI),
-                cout: getValueOrEmptyString(room.AYRILISTARIHI)
-            };
+                        transformedRecords.push({
+                            roomNo: String(g.ROOM || '').trim(),
+                            firstName: formatNameSurname(String(g.FIRST || '')),
+                            lastName: formatNameSurname(String(g.LAST || '')),
+                            belgeNo: String(idNumber || '').toLowerCase().trim(),
+                            birthDate: String(g.BIRTH_DATE || ''),
+                            uyruk: String(g.GUEST_COUNTRY || ''),
+                            belgeTuru: String(idType || ''),
+                            ikametAdresi: String(g.COUNTRY_DESCRIPTION || '').trim(),
+                            cin: String(cin),
+                            cout: String(cout)
+                        });
+                    }
+                }
+            });
         });
 
     } catch (error) {
-        console.error("transformPoliceReportData'da kritik hata oluştu:", error);
-        throw new Error("Polis Raporu veri dönüşümü sırasında kritik bir hata oluştu: " + error.message);
+        console.error("Dönüştürme hatası:", error);
+        throw new Error("Veri işleme sırasında bir hata oluştu.");
     }
 
     return transformedRecords;

@@ -118,8 +118,8 @@ export const checkTcPassportConsistency = (processedPolisRaporuData) => {
             const isTc = guest.belgeNo.length === 11 && !isNaN(guest.belgeNo);
             const startsWith9x = guest.belgeNo.startsWith('99') || guest.belgeNo.startsWith('98') || guest.belgeNo.startsWith('97');
 
-            // Kontrol 5: Belge Türü TCKN ise uyruk TC olmalı
-            if (guest.uyruk.toUpperCase() !== 'TC') {
+            // Kontrol 5: Belge Türü TCKN ise uyruk TR olmalı
+            if (guest.uyruk.toUpperCase() !== 'TR') {
                 errors.push({ id: uuidv4(), type: 'TC_UYRUK_MISMATCH', message: `Oda No: ${guest.roomNo}, Misafir: ${guestName} için belgeTuru TCKN iken uyruk TC değil.`, guest, roomNo: guest.roomNo });
             }
 
