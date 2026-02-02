@@ -118,9 +118,7 @@ function KBSErrorsSection() {
                                                                         kbsGuestsForDisplay.map((detail, idx) => (
                                                                             <div key={idx} className="mb-2">
                                                                                 <small><strong>Ad:</strong> {detail.kbsGuest.ad || '-'}</small><br/>
-                                                                                <small><strong>Soyad:</strong> {detail.kbsGuest.soyad || '-'}</small><br/>
-                                                                                <small><strong>Belge No:</strong> {detail.kbsGuest.belgeNo || '-'}</small>
-                                                                                {/* Son misafirden sonra çizgi eklememek için kontrol yapıldı */}
+                                                                                <small><strong>Soyad:</strong> {detail.kbsGuest.soyad || '-'}</small>
                                                                                 {idx < kbsGuestsForDisplay.length - 1 && <hr className="my-1" />}
                                                                             </div>
                                                                         ))
@@ -129,7 +127,7 @@ function KBSErrorsSection() {
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            {/* Dikey bölücü çizgi */}
+                                                            
                                                             <div className="vr mx-2"></div>
                                                             
                                                             <div style={{ flex: 1, paddingLeft: '10px' }}>
@@ -139,9 +137,7 @@ function KBSErrorsSection() {
                                                                         operaGuestsForDisplay.map((detail, idx) => (
                                                                             <div key={idx} className="mb-2">
                                                                                 <small><strong>Ad:</strong> {detail.operaGuest.ad || '-'}</small><br/>
-                                                                                <small><strong>Soyad:</strong> {detail.operaGuest.soyad || '-'}</small><br/>
-                                                                                <small><strong>Belge No:</strong> {detail.operaGuest.belgeNo || '-'}</small>
-                                                                                {/* Son misafirden sonra çizgi eklememek için kontrol yapıldı */}
+                                                                                <small><strong>Soyad:</strong> {detail.operaGuest.soyad || '-'}</small>
                                                                                 {idx < operaGuestsForDisplay.length - 1 && <hr className="my-1" />}
                                                                             </div>
                                                                         ))

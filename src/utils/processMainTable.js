@@ -4,6 +4,17 @@ const getValueOrEmptyString = (value) => {
     return (value === null || value === undefined) ? '' : value;
 };
 
+// --- İSİM TEMİZLEME VE FORMATLAMA FONKSİYONU ---
+const formatName = (rawName) => {
+    if (!rawName) return "";
+    let clean = rawName.replace(/,?\s?(BYN|BY|BAYAN|BAY)$/gi, '');
+    let parts = clean.split(',').map(p => p.trim());
+    if (parts.length >= 2) {
+        return `${parts[1]} ${parts[0]}`; 
+    }
+    return parts[0];
+};
+
 export const processMainTable = (inhouseData, routingData, cashringData) => {
     if (!inhouseData || inhouseData.length === 0) {
         return [];
@@ -16,7 +27,6 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
             if (roomNo) {
                 const rawRouting = route.routingList?.G_ROUTING;
                 const routingItems = Array.isArray(rawRouting) ? rawRouting : (rawRouting ? [rawRouting] : []);
-                
                 if (!routingMap.has(roomNo)) {
                     routingMap.set(roomNo, []);
                 }
@@ -55,50 +65,50 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
         }
 
         // --- ROUTING AYRIŞTIRMA (TO & FROM) ---
-        
-        // 1. "Routed to" temizliği: Sadece baştaki ibareyi at, BB/HB gibi ekleri koru.
         const toRoutes = routingListForRoom
             .filter(route => getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to"))
             .map(route => {
-                // Sadece en baştaki "Routed to " kısmını siler, gerisine dokunmaz.
-                return getValueOrEmptyString(route.TRX_STRING).replace(/^Routed to\s+/i, "").trim();
+                let rawText = getValueOrEmptyString(route.TRX_STRING).replace(/^Routed to\s+/i, "").trim();
+                
+                // Parçalama: "403 Pegasus: BB" -> ["403 Pegasus", "BB"]
+                let parts = rawText.split(':');
+                let mainInfo = parts[0] ? parts[0].trim() : "";
+                let boardType = parts[1] ? parts[1].trim() : "";
+                
+                // Eğer WIN tipi ise ödeme metodunu al (BNK, CL, CA vb.)
+                let paymentMethod = (route.RI_ROUTING_TYPE === "W") ? getValueOrEmptyString(route.RI_PAYMENT_METHOD) : "";
+
+                // UI'da parçalamak için özel ayraç kullanıyoruz
+                return `${mainInfo}|${boardType}|${paymentMethod}`;
             });
 
-        // 2. "Routed from" temizliği: Aynı şekilde sadece başı sil.
         const fromRoutes = routingListForRoom
             .filter(route => getValueOrEmptyString(route.TRX_STRING).startsWith("Routed from"))
             .map(route => {
                 return getValueOrEmptyString(route.TRX_STRING).replace(/^Routed from\s+/i, "").trim();
             });
 
-        // Tekrarları önle ve virgülle birleştir
-        let routingValue = toRoutes.length > 0 ? [...new Set(toRoutes)].join(', ') : "";
+        // Unique yap ve çift boru ile birleştir
+        let routingValue = toRoutes.length > 0 ? [...new Set(toRoutes)].join('||') : "";
         let routedFromValue = fromRoutes.length > 0 ? [...new Set(fromRoutes)].join(', ') : "";
 
         // --- WIN1 & WIN2 ---
-        const win1Routing = routingListForRoom.find(route => 
-            route.RI_FOLIO_VIEW === 1 && getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to")
-        );
-        const win2Routing = routingListForRoom.find(route => 
-            route.RI_FOLIO_VIEW === 2 && getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to")
-        );
-
+        const win1Routing = routingListForRoom.find(route => route.RI_FOLIO_VIEW === 1 && getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to"));
+        const win2Routing = routingListForRoom.find(route => route.RI_FOLIO_VIEW === 2 && getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to"));
         let win1RoutingName = win1Routing ? getValueOrEmptyString(win1Routing.TRX_STRING).replace(/^Routed to\s+/i, "").trim() : '';
         let win2RoutingName = win2Routing ? getValueOrEmptyString(win2Routing.TRX_STRING).replace(/^Routed to\s+/i, "").trim() : '';
         
         let processedCompany = getValueOrEmptyString(inhouseGuest.companyName);
-        if (processedCompany.length > 3) {
-            processedCompany = processedCompany.substring(3);
-        }
+        if (processedCompany.length > 3) { processedCompany = processedCompany.substring(3); }
 
         return {
             id: uuidv4(),
             roomNo: getValueOrEmptyString(inhouseGuest.roomNo),
-            name: getValueOrEmptyString(inhouseGuest.name),
+            name: formatName(getValueOrEmptyString(inhouseGuest.name)),
             rateCode: getValueOrEmptyString(inhouseGuest.rateCode),
             company: processedCompany,
-            routing: routingValue,     // Örn: "Canyon Holidays Seya: BB"
-            routedFrom: routedFromValue, // Örn: "806 Mahmoud Mustafa: BB"
+            routing: routingValue,
+            routedFrom: routedFromValue,
             rate: getValueOrEmptyString(inhouseGuest.rate),
             caCl: getValueOrEmptyString(inhouseGuest.paymentMethod),
             paraBirimi: getValueOrEmptyString(inhouseGuest.currencyCode),
@@ -106,14 +116,8 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
             cinDate: getValueOrEmptyString(inhouseGuest.arrivalDate),
             coutDate: getValueOrEmptyString(inhouseGuest.departureDate),
             balance: getValueOrEmptyString(inhouseGuest.balance),
-            win1: {
-                cashringValue: getValueOrEmptyString(cashringInfo.win1),
-                routingName: win1RoutingName,
-            },
-            win2: {
-                cashringValue: getValueOrEmptyString(cashringInfo.win2),
-                routingName: win2RoutingName,
-            },
+            win1: { cashringValue: getValueOrEmptyString(cashringInfo.win1), routingName: win1RoutingName },
+            win2: { cashringValue: getValueOrEmptyString(cashringInfo.win2), routingName: win2RoutingName },
             odaDegeri: getValueOrEmptyString(cashringInfo.accRate),
         };
     });
