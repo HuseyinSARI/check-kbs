@@ -161,7 +161,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
               />
             </Form.Group>
           </Col>
-          <Col md>
+          {/* <Col md>
             <Form.Group controlId="formFilePolice" className="mb-2">
               <Form.Label className={getLabelClass('policeReport')}>Polis Raporu (p2203)</Form.Label>
               <Form.Control
@@ -172,7 +172,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 className={getFileClass('policeReport')}
               />
             </Form.Group>
-          </Col>
+          </Col> */}
           <Col md>
             <Form.Group controlId="formFileRouting" className="mb-2">
               <Form.Label className={getLabelClass('routing')}>Routing Details (XML)</Form.Label>
@@ -185,7 +185,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
               />
             </Form.Group>
           </Col>
-          <Col md>
+          {/* <Col md>
             <Form.Group controlId="formFileCashring" className="mb-2">
               <Form.Label className={getLabelClass('cashring')}>Cashring (p2009)</Form.Label>
               <Form.Control
@@ -196,7 +196,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 className={getFileClass('cashring')}
               />
             </Form.Group>
-          </Col>
+          </Col> */}
           <Col md="auto" className="d-flex align-items-end ">
             <Button
               variant="info"

@@ -15,7 +15,7 @@ const formatName = (rawName) => {
     return parts[0];
 };
 
-export const processMainTable = (inhouseData, routingData, cashringData) => {
+export const processMainTable = (inhouseData, routingData) => {
     if (!inhouseData || inhouseData.length === 0) {
         return [];
     }
@@ -35,19 +35,14 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
         });
     }
 
-    const cashringMap = new Map();
-    if (Array.isArray(cashringData)) {
-        cashringData.forEach(item => {
-            if (item.roomNo) {
-                cashringMap.set(item.roomNo, item);
-            }
-        });
-    }
-
-    const mainTable = inhouseData.map(inhouseGuest => {
+    return inhouseData.map(inhouseGuest => {
         const roomNo = inhouseGuest.roomNo;
         const routingListForRoom = routingMap.get(roomNo) || [];
-        const cashringInfo = cashringMap.get(roomNo) || {};
+
+        // --- KİŞİ SAYISI (PAX) ---
+        const adult = parseInt(inhouseGuest.adults || 0);
+        const child = parseInt(inhouseGuest.children || 0);
+        const paxValue = child > 0 ? `${adult}/${child}` : `${adult}`;
 
         // --- COMMENT BİRLEŞTİRME ---
         let commentValue = "";
@@ -64,40 +59,26 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
             commentValue = getValueOrEmptyString(rawCommentData.RES_COMMENT);
         }
 
-        // --- ROUTING AYRIŞTIRMA (TO & FROM) ---
+        // --- ROUTING AYRIŞTIRMA (TO) ---
         const toRoutes = routingListForRoom
             .filter(route => getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to"))
             .map(route => {
                 let rawText = getValueOrEmptyString(route.TRX_STRING).replace(/^Routed to\s+/i, "").trim();
-                
-                // Parçalama: "403 Pegasus: BB" -> ["403 Pegasus", "BB"]
                 let parts = rawText.split(':');
-                let mainInfo = parts[0] ? parts[0].trim() : "";
-                let boardType = parts[1] ? parts[1].trim() : "";
-                
-                // Eğer WIN tipi ise ödeme metodunu al (BNK, CL, CA vb.)
-                let paymentMethod = (route.RI_ROUTING_TYPE === "W") ? getValueOrEmptyString(route.RI_PAYMENT_METHOD) : "";
-
-                // UI'da parçalamak için özel ayraç kullanıyoruz
-                return `${mainInfo}|${boardType}|${paymentMethod}`;
+                let infoPart = parts[0]?.trim() || "";
+                let boardType = parts[1]?.trim() || "";
+                let roomMatch = infoPart.match(/^(\d{3,4})\s+(.*)/);
+                let isolatedRoom = roomMatch ? roomMatch[1] : "";
+                let isolatedName = roomMatch ? roomMatch[2] : infoPart;
+                let paymentMethod = (route.RI_ROUTING_TYPE === "W") ? getValueOrEmptyString(route.RI_PAYMENT_METHOD).trim() : "";
+                return `${isolatedRoom}|${isolatedName}|${boardType}|${paymentMethod}`;
             });
 
+        // --- ROUTING AYRIŞTIRMA (FROM) ---
         const fromRoutes = routingListForRoom
             .filter(route => getValueOrEmptyString(route.TRX_STRING).startsWith("Routed from"))
-            .map(route => {
-                return getValueOrEmptyString(route.TRX_STRING).replace(/^Routed from\s+/i, "").trim();
-            });
+            .map(route => getValueOrEmptyString(route.TRX_STRING).replace(/^Routed from\s+/i, "").trim());
 
-        // Unique yap ve çift boru ile birleştir
-        let routingValue = toRoutes.length > 0 ? [...new Set(toRoutes)].join('||') : "";
-        let routedFromValue = fromRoutes.length > 0 ? [...new Set(fromRoutes)].join(', ') : "";
-
-        // --- WIN1 & WIN2 ---
-        const win1Routing = routingListForRoom.find(route => route.RI_FOLIO_VIEW === 1 && getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to"));
-        const win2Routing = routingListForRoom.find(route => route.RI_FOLIO_VIEW === 2 && getValueOrEmptyString(route.TRX_STRING).startsWith("Routed to"));
-        let win1RoutingName = win1Routing ? getValueOrEmptyString(win1Routing.TRX_STRING).replace(/^Routed to\s+/i, "").trim() : '';
-        let win2RoutingName = win2Routing ? getValueOrEmptyString(win2Routing.TRX_STRING).replace(/^Routed to\s+/i, "").trim() : '';
-        
         let processedCompany = getValueOrEmptyString(inhouseGuest.companyName);
         if (processedCompany.length > 3) { processedCompany = processedCompany.substring(3); }
 
@@ -105,10 +86,11 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
             id: uuidv4(),
             roomNo: getValueOrEmptyString(inhouseGuest.roomNo),
             name: formatName(getValueOrEmptyString(inhouseGuest.name)),
+            pax: paxValue,
             rateCode: getValueOrEmptyString(inhouseGuest.rateCode),
             company: processedCompany,
-            routing: routingValue,
-            routedFrom: routedFromValue,
+            routing: [...new Set(toRoutes)].join('||'),
+            routedFrom: [...new Set(fromRoutes)].join(', '),
             rate: getValueOrEmptyString(inhouseGuest.rate),
             caCl: getValueOrEmptyString(inhouseGuest.paymentMethod),
             paraBirimi: getValueOrEmptyString(inhouseGuest.currencyCode),
@@ -116,11 +98,6 @@ export const processMainTable = (inhouseData, routingData, cashringData) => {
             cinDate: getValueOrEmptyString(inhouseGuest.arrivalDate),
             coutDate: getValueOrEmptyString(inhouseGuest.departureDate),
             balance: getValueOrEmptyString(inhouseGuest.balance),
-            win1: { cashringValue: getValueOrEmptyString(cashringInfo.win1), routingName: win1RoutingName },
-            win2: { cashringValue: getValueOrEmptyString(cashringInfo.win2), routingName: win2RoutingName },
-            odaDegeri: getValueOrEmptyString(cashringInfo.accRate),
         };
     });
-
-    return mainTable;
 };
