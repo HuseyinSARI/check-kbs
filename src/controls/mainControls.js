@@ -1,7 +1,7 @@
 // src/controls/mainControls.js
 import { useEffect, useRef } from 'react';
 import { useData } from '../context/DataContext';
-import { compareKBSAndPoliceReportData } from './kbsOperaCompare'; 
+import { compareKBSAndPoliceReportData } from './kbsOperaCompare';
 import { checkGuestCountConsistency } from './basicControls';
 import { checkRoutingComments } from './checkRoutingComments';
 
@@ -11,6 +11,7 @@ export const useMainControls = () => {
         processedInhouseData,
         processedRoutingData,
         setGeneralOperaErrorsData,
+        processedPolisRaporuData,
         setKbsErrorsData,
         addGeneralInfo,
         updateCheckStatus,
@@ -26,10 +27,10 @@ export const useMainControls = () => {
         if (processedKBSData.length > 0 && processedInhouseData.length > 0) {
             const kbsErrors = compareKBSAndPoliceReportData(processedKBSData, processedInhouseData);
             setKbsErrorsData(kbsErrors);
-            
+
             const errorCount = Object.keys(kbsErrors).length;
             const msg = errorCount === 0 ? '🥳 İsim ve Oda eşleşmeleri mükemmel!' : `⚠️ ${errorCount} odada isim uyumsuzluğu var.`;
-            
+
             if (!sentMessagesRef.current[msg]) {
                 addGeneralInfo(errorCount === 0 ? 'info' : 'warning', msg, 'system');
                 sentMessagesRef.current[msg] = true;
@@ -56,11 +57,58 @@ export const useMainControls = () => {
             ]);
         }
 
+        // 4. POLİS RAPORU EKSİK VERİ KONTROLÜ 
+        if (processedPolisRaporuData && processedPolisRaporuData.length > 0) {
+            const missingDataErrors = [];
+
+            processedPolisRaporuData.forEach(guest => {
+                const isBirthDateMissing = !guest.birthDate || guest.birthDate.trim() === "";
+                const isBelgeNoMissing = !guest.belgeNo || guest.belgeNo.trim() === "";
+
+                if (isBirthDateMissing || isBelgeNoMissing) {
+                    let missingFields = [];
+                    if (isBirthDateMissing) missingFields.push("Doğum Tarihi");
+                    if (isBelgeNoMissing) missingFields.push("Belge No");
+
+                    missingDataErrors.push({
+                        id: `missing-${guest.roomNo}-${guest.firstName}`,
+                        type: 'MISSING_POLICE_DATA',
+                        roomNo: guest.roomNo,
+                        message: `Oda ${guest.roomNo}: ${guest.firstName} ${guest.lastName} isimli misafirin ${missingFields.join(" ve ")} eksik!`,
+                        severity: 'danger'
+                    });
+                }
+            });
+
+            if (missingDataErrors.length > 0) {
+                setGeneralOperaErrorsData(prev => [
+                    ...prev.filter(e => e.type !== 'MISSING_POLICE_DATA'),
+                    ...missingDataErrors
+                ]);
+
+                const msg = `🚫 Polis raporunda ${missingDataErrors.length} misafirin kritik verisi eksik!`;
+                if (!sentMessagesRef.current[msg]) {
+                    addGeneralInfo('danger', msg, 'system');
+                    sentMessagesRef.current[msg] = true;
+                }
+            }
+            newChecksStatus['tcPassport'] = 'completed'; // Bu check ID'sini Context'teki checks arrayine göre ayarlayabilirsin
+        }
+
         // DURUM GÜNCELLEME (UI İÇİN)
         Object.keys(newChecksStatus).forEach(id => {
             const current = checks.find(c => c.id === id)?.status;
             if (current !== newChecksStatus[id]) updateCheckStatus(id, newChecksStatus[id]);
         });
 
-    }, [processedKBSData, processedInhouseData, processedRoutingData, setKbsErrorsData, setGeneralOperaErrorsData, addGeneralInfo, updateCheckStatus, checks]);
+    }, [
+        processedKBSData,
+        processedInhouseData,
+        processedRoutingData,
+        processedPolisRaporuData,
+        setKbsErrorsData,
+        setGeneralOperaErrorsData,
+        addGeneralInfo,
+        updateCheckStatus,
+        checks]);
 };

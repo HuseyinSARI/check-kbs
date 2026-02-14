@@ -160,19 +160,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 className={getFileClass('kbs')}
               />
             </Form.Group>
-          </Col>
-          {/* <Col md>
-            <Form.Group controlId="formFilePolice" className="mb-2">
-              <Form.Label className={getLabelClass('policeReport')}>Polis Raporu (p2203)</Form.Label>
-              <Form.Control
-                type="file"
-                onChange={(e) => handleFileChange(e, 'policeReport')}
-                accept=".xml"
-                disabled={isLoading}
-                className={getFileClass('policeReport')}
-              />
-            </Form.Group>
-          </Col> */}
+          </Col>         
           <Col md>
             <Form.Group controlId="formFileRouting" className="mb-2">
               <Form.Label className={getLabelClass('routing')}>Routing Details (XML)</Form.Label>
@@ -182,6 +170,18 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 accept=".xml"
                 disabled={isLoading}
                 className={getFileClass('routing')}
+              />
+            </Form.Group>
+          </Col>
+           <Col md>
+            <Form.Group controlId="formFilePolice" className="mb-2">
+              <Form.Label className={getLabelClass('policeReport')}>police_report2</Form.Label>
+              <Form.Control
+                type="file"
+                onChange={(e) => handleFileChange(e, 'policeReport')}
+                accept=".xml"
+                disabled={isLoading}
+                className={getFileClass('policeReport')}
               />
             </Form.Group>
           </Col>

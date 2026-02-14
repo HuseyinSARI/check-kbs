@@ -6,15 +6,18 @@ import { useData } from '../context/DataContext';
 import { processMainTable } from '../utils/processMainTable';
 import { getControlStyles } from '../controls/rateControl';
 
-const initialSorting = [{ id: 'rateCode', desc: false }];
-
+const initialSorting = [
+  { id: 'rateCode', desc: false },
+  { id: 'company', desc: false },
+  { id: 'pax', desc: false },
+  { id: 'cinDate', desc: false },
+];
 function TableSection() {
   const { processedInhouseData, processedRoutingData, setMainTableData, mainTableData } = useData();
   const [sorting, setSorting] = useState(initialSorting);
 
   useEffect(() => {
     if (processedInhouseData && processedInhouseData.length > 0) {
-      // Artık cashringData parametresini göndermiyoruz
       setMainTableData(processMainTable(processedInhouseData, processedRoutingData));
     } else {
       setMainTableData([]);
