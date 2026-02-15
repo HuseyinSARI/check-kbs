@@ -34,7 +34,7 @@ export const checkGuestCountConsistency = (inhouseData) => {
             errors.push({
                 roomNo: room.roomNo,
                 type: 'GUEST_COUNT_MISMATCH',
-                message: `Kişi Sayısı Uyumsuz: XML'de ${totalExpected} kişi (A:${adults} Ç:${children}) görünüyor, ancak ${actualGuestCount} isim kayıtlı.`,
+                message: `Kişi Sayısı Uyumsuz: Oda: ${room.roomNo}`,
                 severity: 'warning'
             });
         }
