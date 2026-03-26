@@ -93,7 +93,7 @@ function TableSection() {
     { 
       accessorKey: 'comment', 
       header: 'Comment', 
-      cell: info => <div style={{ minWidth: '200px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{info.getValue()}</div> 
+      cell: info => <div style={{ minWidth: '200px', maxWidth: '600px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{info.getValue()}</div> 
     },
     { 
       accessorKey: 'balance', 

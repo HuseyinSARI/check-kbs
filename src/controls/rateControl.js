@@ -18,7 +18,7 @@ const normalizePrice = (value) => {
 * Nokta/virgül farklılıklarını ve binlik ayırıcıları tolere eder.
 */
 const isRateInComment = (rate, comment) => {
-  if (!rate || rate === 0 || rate === "0") return true; // Fiyat 0 ise kontrol etme
+  if (!rate || rate === 100 || rate === "100") return true; // Fiyat 100 ise kontrol etme
   if (!comment) return false;
 
   // 1. Rate'i temizle (Örn: 3405.63)
@@ -35,10 +35,7 @@ const isRateInComment = (rate, comment) => {
       const cleanPriceStr = priceStr.replace(/,/g, ''); 
       const commentPrice = parseFloat(cleanPriceStr);
 
-      // Kuruş farklarını tolere etmek için (Örn: 3405.60 vs 3405.63) 
-      // Math.abs kullanarak aradaki fark 1 birimden azsa "tamam" diyoruz.
-      // Eğer kuruşu kuruşuna aynı olsun istersen: return commentPrice === rateNumber;
-      return Math.abs(commentPrice - rateNumber) < 1; 
+      return commentPrice === rateNumber;
   });
 };
 

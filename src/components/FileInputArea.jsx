@@ -173,7 +173,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
               />
             </Form.Group>
           </Col>
-           <Col md>
+           {/* <Col md>
             <Form.Group controlId="formFilePolice" className="mb-2">
               <Form.Label className={getLabelClass('policeReport')}>police_report2</Form.Label>
               <Form.Control
@@ -184,7 +184,7 @@ function FileInputArea({ onFileSelect, isLoading }) {
                 className={getFileClass('policeReport')}
               />
             </Form.Group>
-          </Col>
+          </Col> */}
           {/* <Col md>
             <Form.Group controlId="formFileCashring" className="mb-2">
               <Form.Label className={getLabelClass('cashring')}>Cashring (p2009)</Form.Label>
