@@ -10,7 +10,7 @@ const formatName = (rawName) => {
     let clean = rawName.replace(/,?\s?(BYN|BY|BAYAN|BAY)$/gi, '');
     let parts = clean.split(',').map(p => p.trim());
     if (parts.length >= 2) {
-        return `${parts[1]} ${parts[0]}`; 
+        return `${parts[1]} ${parts[0]}`;
     }
     return parts[0];
 };
@@ -44,19 +44,47 @@ export const processMainTable = (inhouseData, routingData) => {
         const child = parseInt(inhouseGuest.children || 0);
         const paxValue = child > 0 ? `${adult}/${child}` : `${adult}`;
 
-        // --- COMMENT BİRLEŞTİRME ---
+        // --- COMMENT BİRLEŞTİRME VE SİSTEM MESAJI FİLTRELEME ---
         let commentValue = "";
+
+        // Engellenmesi gereken başlangıç kelimeleri veya kalıpları
+        const excludeList = [
+            "Email missing",
+            "Non-ALL member"
+        ];
+
         const rawCommentData = inhouseGuest.LIST_G_COMMENT_RESV_NAME_ID || inhouseGuest.comment;
+
         if (rawCommentData && rawCommentData.G_COMMENT_RESV_NAME_ID) {
-            const commentsArray = Array.isArray(rawCommentData.G_COMMENT_RESV_NAME_ID) 
-                ? rawCommentData.G_COMMENT_RESV_NAME_ID 
+            // Veriyi her zaman diziye çevir (Tekli de olsa çoklu da olsa)
+            const commentsArray = Array.isArray(rawCommentData.G_COMMENT_RESV_NAME_ID)
+                ? rawCommentData.G_COMMENT_RESV_NAME_ID
                 : [rawCommentData.G_COMMENT_RESV_NAME_ID];
+
             commentValue = commentsArray
                 .map(item => getValueOrEmptyString(item.RES_COMMENT).trim())
-                .filter(text => text !== "")
-                .join(" || ");
+                .filter(text => {
+                    // 1. Boş metinleri ele
+                    if (!text) return false;
+
+                    // 2. excludeList içindeki kalıplardan biriyle başlıyor mu kontrol et
+                    // (Küçük/büyük harf duyarlılığını kaldırmak için ikisini de küçük harfe çeviriyoruz)
+                    const shouldExclude = excludeList.some(excludedText =>
+                        text.toLowerCase().startsWith(excludedText.toLowerCase())
+                    );
+
+                    // Eğer shouldExclude true ise, bu yorumu gösterme (false döndür)
+                    return !shouldExclude;
+                })
+                .join(" || "); // Kalan gerçek yorumları birleştir
+
         } else if (rawCommentData && rawCommentData.RES_COMMENT) {
-            commentValue = getValueOrEmptyString(rawCommentData.RES_COMMENT);
+            // Basit yapıdaki commentler için de aynı filtreyi uygula
+            const text = getValueOrEmptyString(rawCommentData.RES_COMMENT).trim();
+            const shouldExclude = excludeList.some(excludedText =>
+                text.toLowerCase().startsWith(excludedText.toLowerCase())
+            );
+            commentValue = shouldExclude ? "" : text;
         }
 
         // --- ROUTING AYRIŞTIRMA (TO) ---
