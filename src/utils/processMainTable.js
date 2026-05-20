@@ -50,7 +50,10 @@ export const processMainTable = (inhouseData, routingData) => {
         // Engellenmesi gereken başlangıç kelimeleri veya kalıpları
         const excludeList = [
             "Email missing",
-            "Non-ALL member"
+            "Non-ALL member",
+            "**Check Pref**",
+            "Bu rezervasyon",
+            "1 çift"            
         ];
 
         const rawCommentData = inhouseGuest.LIST_G_COMMENT_RESV_NAME_ID || inhouseGuest.comment;

@@ -7,7 +7,7 @@ const cleanNameForMatch = (value) => {
     if (!value) return '';
     let str = String(value).toLocaleUpperCase('tr-TR').trim();
     // Sonda gelen unvanları temizle
-    str = str.replace(/,?\s?(BYN|BY|BAYAN|BAY)$/g, '');
+    str = str.replace(/,?\s?(BYN|BY|BAYAN|BAY|Mrs.|Mr.|Mr|Mrs|Ms.|Ms)$/g, '');
     // Noktalama ve boşlukları sil
     return str.replace(/[,./\s]/g, ''); 
 };
